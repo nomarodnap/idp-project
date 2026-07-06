@@ -6,10 +6,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FileText, Loader2, Clock, CheckCircle2, MoreHorizontal } from "lucide-react";
 
 const statCards = [
-  { title: "แผนทั้งหมด", value: "12", icon: FileText, color: "text-blue-600" },
-  { title: "กำลังดำเนินการ", value: "3", icon: Loader2, color: "text-amber-500" },
-  { title: "รอการอนุมัติ", value: "2", icon: Clock, color: "text-orange-500" },
-  { title: "เสร็จสิ้น", value: "7", icon: CheckCircle2, color: "text-emerald-600" },
+  { title: "แผนทั้งหมด", value: "12", icon: FileText, color: "text-blue-600", subtitle: "แผนพัฒนาตลอดปี" },
+  { title: "กำลังดำเนินการ", value: "3", icon: Loader2, color: "text-amber-500", subtitle: "อยู่ระหว่างศึกษา" },
+  { title: "รอการอนุมัติ", value: "2", icon: Clock, color: "text-orange-500", subtitle: "รอการประเมินผล" },
+  { title: "เสร็จสิ้น", value: "7", icon: CheckCircle2, color: "text-emerald-600", subtitle: "ผ่านเกณฑ์ 100%" },
 ];
 
 const recentPlans = [
