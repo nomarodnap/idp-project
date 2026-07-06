@@ -34,13 +34,14 @@ type FormValues = z.infer<typeof formSchema>;
 export function CreateIDPForm() {
   const router = useRouter();
   const [step, setStep] = useState(1);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const {
     control,
     handleSubmit,
     trigger,
     clearErrors,
-    formState: { errors, isSubmitted },
+    formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
@@ -94,7 +95,7 @@ export function CreateIDPForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-8">
+    <form onSubmit={(e) => { setHasSubmitted(true); handleSubmit(onSubmit, onError)(e); }} className="space-y-8">
       {/* หัวข้อใหญ่หลัก */}
       {step === 1 && (
         <div className="space-y-6 bg-slate-50/50 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-purple-800/30 shadow-sm">
@@ -414,7 +415,7 @@ export function CreateIDPForm() {
                 >
                   70% การเรียนรู้จากประสบการณ์ (Experiential Learning)
                 </Label>
-                {isSubmitted && errors.dev70 && (
+                {hasSubmitted && errors.dev70 && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
                     {errors.dev70.message}
                   </span>
@@ -503,7 +504,7 @@ export function CreateIDPForm() {
                 >
                   20% การเรียนรู้จากผู้อื่น (Social Learning)
                 </Label>
-                {isSubmitted && errors.dev20 && (
+                {hasSubmitted && errors.dev20 && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
                     {errors.dev20.message}
                   </span>
@@ -576,7 +577,7 @@ export function CreateIDPForm() {
                 >
                   10% การเรียนรู้จากการฝึกอบรม (Formal Learning)
                 </Label>
-                {isSubmitted && errors.dev10 && (
+                {hasSubmitted && errors.dev10 && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
                     {errors.dev10.message}
                   </span>
