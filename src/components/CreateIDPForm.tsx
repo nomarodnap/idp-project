@@ -40,7 +40,7 @@ export function CreateIDPForm() {
     handleSubmit,
     trigger,
     clearErrors,
-    formState: { errors },
+    formState: { errors, isSubmitted },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
@@ -414,7 +414,7 @@ export function CreateIDPForm() {
                 >
                   70% การเรียนรู้จากประสบการณ์ (Experiential Learning)
                 </Label>
-                {errors.dev70 && (
+                {isSubmitted && errors.dev70 && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
                     {errors.dev70.message}
                   </span>
@@ -503,7 +503,7 @@ export function CreateIDPForm() {
                 >
                   20% การเรียนรู้จากผู้อื่น (Social Learning)
                 </Label>
-                {errors.dev20 && (
+                {isSubmitted && errors.dev20 && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
                     {errors.dev20.message}
                   </span>
@@ -576,7 +576,7 @@ export function CreateIDPForm() {
                 >
                   10% การเรียนรู้จากการฝึกอบรม (Formal Learning)
                 </Label>
-                {errors.dev10 && (
+                {isSubmitted && errors.dev10 && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
                     {errors.dev10.message}
                   </span>
