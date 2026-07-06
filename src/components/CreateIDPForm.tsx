@@ -25,6 +25,7 @@ const formSchema = z.object({
   dev70: z.string().min(1, "กรุณาเลือกการเรียนรู้จากประสบการณ์ (70%)"),
   dev20: z.string().min(1, "กรุณาเลือกการเรียนรู้จากผู้อื่น (20%)"),
   dev10: z.string().min(1, "กรุณาเลือกการเรียนรู้จากการฝึกอบรม (10%)"),
+  supervisorName: z.string().min(1, "กรุณากรอกชื่อ-สกุล ตำแหน่งผู้บังคับบัญชา"),
 });
 
 const categoryOptions = {
@@ -97,6 +98,7 @@ export function CreateIDPForm() {
       dev70: "",
       dev20: "",
       dev10: "",
+      supervisorName: "",
     },
   });
   const watchCategory = useWatch({
@@ -115,14 +117,14 @@ export function CreateIDPForm() {
     // TODO: Proceed to next step based on user requirements
   }
 
-  const handleNextStep = async () => {
+  const handleNextToStep2 = async () => {
     const isValid = await trigger([
       "devCategory",
       "devTopic",
       "courseTitle"
     ]);
 
-    // ป้องกันไม่ให้ zodResolver แสดง error ของหน้า 2 ล่วงหน้า
+    // ป้องกันไม่ให้ zodResolver แสดง error ของหน้าถัดไปล่วงหน้า
     clearErrors(["dev70", "dev20", "dev10"]);
 
     if (isValid) {
@@ -130,10 +132,27 @@ export function CreateIDPForm() {
     }
   };
 
+  const handleNextToStep3 = async () => {
+    const isValid = await trigger([
+      "dev70",
+      "dev20",
+      "dev10"
+    ]);
+
+    clearErrors(["supervisorName"]);
+
+    if (isValid) {
+      setStep(3);
+    }
+  };
+
   const onError = (errors: any) => {
-    // If there are errors in step 1, go back to step 1 to show them
     if (errors.devCategory || errors.devTopic || errors.courseTitle) {
       setStep(1);
+    } else if (errors.dev70 || errors.dev20 || errors.dev10) {
+      setStep(2);
+    } else {
+      setStep(3);
     }
   };
 
@@ -247,7 +266,7 @@ export function CreateIDPForm() {
                   render={({ field }) => (
                     <Input
                       {...field}
-                      placeholder="เช่น คอร์สพัฒนาบุคลิกภาพ, การเขียน React ขั้นสูง"
+                      placeholder="กรอกหลักสูตร"
                       className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all md:text-base text-base ${errors.courseTitle ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
                     />
                   )}
@@ -294,7 +313,7 @@ export function CreateIDPForm() {
                 การได้รับการมอบหมายงานให้รับผิดชอบ
                 การติดตามและสังเกตการณ์ทำงานของผู้ร่วมงาน
                 เพื่อให้เกิดพัฒนาความรู้ ความคิด และทักษะในการทำงาน
-                รู้จักการแก้ไขปัญหา เพื่อให้งานบรรลุเป้าหมาย ดังนี้
+                รู้จักการแก้ไขปัญหา เพื่อให้งานบรรลุเป้าหมาย
               </p>
               <Controller
                 control={control}
@@ -315,7 +334,7 @@ export function CreateIDPForm() {
                         htmlFor="dev70-1"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        1. การลงมือปฏิบัติ (On the-job Training)
+                        การลงมือปฏิบัติ (On the-job Training)
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
@@ -328,7 +347,7 @@ export function CreateIDPForm() {
                         htmlFor="dev70-2"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        2. การได้รับมอบหมายงาน (Assignment)
+                        การได้รับมอบหมายงาน (Assignment)
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
@@ -341,7 +360,7 @@ export function CreateIDPForm() {
                         htmlFor="dev70-3"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300 leading-relaxed"
                       >
-                        3. การเรียนรู้ด้วยตนเองโดยการศึกษาจากเอกสาร คู่มือ
+                        การเรียนรู้ด้วยตนเองโดยการศึกษาจากเอกสาร คู่มือ
                         แนวทางการปฏิบัติ YouTube TikTok ฯลฯ (Self-learning)
                       </Label>
                     </div>
@@ -355,7 +374,7 @@ export function CreateIDPForm() {
                         htmlFor="dev70-4"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        4. การติดตาม / สังเกต (Job Shadowing)
+                        การติดตาม / สังเกต (Job Shadowing)
                       </Label>
                     </div>
                   </RadioGroup>
@@ -381,7 +400,6 @@ export function CreateIDPForm() {
               <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                 เกิดจากการให้คำปรึกษาแนะนำ การสอนงาน และข้อมูลย้อนกลับ
                 จากผู้บังคับบัญชา เพื่อนร่วมงาน และบุคคลอื่น ๆ ที่เกี่ยวข้อง
-                ดังนี้
               </p>
               <Controller
                 control={control}
@@ -402,7 +420,7 @@ export function CreateIDPForm() {
                         htmlFor="dev20-1"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        1. การให้คำปรึกษาแนะนำ (Consulting)
+                        การให้คำปรึกษาแนะนำ (Consulting)
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
@@ -415,7 +433,7 @@ export function CreateIDPForm() {
                         htmlFor="dev20-2"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        2. การสอนงาน (Coaching)
+                        การสอนงาน (Coaching)
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
@@ -428,7 +446,7 @@ export function CreateIDPForm() {
                         htmlFor="dev20-3"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        3. การให้ข้อมูลป้อนกลับ (Feedback)
+                        การให้ข้อมูลป้อนกลับ (Feedback)
                       </Label>
                     </div>
                   </RadioGroup>
@@ -453,7 +471,7 @@ export function CreateIDPForm() {
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                 ได้มาจากการเข้าฝึกอบรม การประชุม / สัมมนาอย่างเป็นทางการ
-                และไม่เป็นทางการ ผ่านช่องทางการเรียนรู้และสื่อต่าง ๆ ดังนี้
+                และไม่เป็นทางการ ผ่านช่องทางการเรียนรู้และสื่อต่าง ๆ
               </p>
               <Controller
                 control={control}
@@ -474,7 +492,7 @@ export function CreateIDPForm() {
                         htmlFor="dev10-1"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300 leading-relaxed"
                       >
-                        1. การอบรมในรูปแบบการเรียนผ่านระบบ e-learning
+                        การอบรมในรูปแบบการเรียนผ่านระบบ e-learning
                         การอบรมในห้องเรียนทั้งในรูปแบบ Onsite Online และ ผสมผสาน
                         (Hybrid) (Training) ฯลฯ
                       </Label>
@@ -489,7 +507,7 @@ export function CreateIDPForm() {
                         htmlFor="dev10-2"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        2. การประชุม / สัมมนา (Meeting / Seminar)
+                        การประชุม / สัมมนา (Meeting / Seminar)
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
@@ -502,7 +520,7 @@ export function CreateIDPForm() {
                         htmlFor="dev10-3"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        3. การอบรม / ประชุม แบบไม่เป็นทางการ
+                        การอบรม / ประชุม แบบไม่เป็นทางการ
                       </Label>
                     </div>
                   </RadioGroup>
@@ -513,9 +531,53 @@ export function CreateIDPForm() {
         </div>
       )}
 
+      
+      {/* หัวข้อใหญ่ที่ 3 */}
+      {step === 3 && (
+        <div className="space-y-6 bg-slate-50/50 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-purple-800/30 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="border-b-2 border-purple-100 dark:border-purple-800/50 pb-3">
+            <h2 className="text-xl font-bold text-[#2e1065] dark:text-purple-100 flex items-center gap-3">
+              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-200 text-sm shrink-0">
+                3
+              </span>
+              ข้อมูลผู้บังคับบัญชา
+            </h2>
+          </div>
+
+          <div className="flex flex-col space-y-8 mt-6">
+            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label
+                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
+                  htmlFor="supervisorName"
+                >
+                  ชื่อ-สกุล ตำแหน่งผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ
+                </Label>
+                {hasSubmitted && errors.supervisorName && (
+                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+                    {errors.supervisorName.message}
+                  </span>
+                )}
+              </div>
+              <Controller
+                control={control}
+                name="supervisorName"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    placeholder="กรุณากรอกชื่อ-สกุล และตำแหน่ง"
+                    className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all md:text-base text-base ${hasSubmitted && errors.supervisorName ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
+                  />
+                )}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="pt-8 mt-8 flex justify-end items-center gap-4">
-        {step === 1 ? (
+        {step === 1 && (
           <>
             <Button
               type="button"
@@ -527,18 +589,38 @@ export function CreateIDPForm() {
             </Button>
             <Button
               type="button"
-              onClick={(e) => { e.preventDefault(); handleNextStep(); }}
+              onClick={(e) => { e.preventDefault(); handleNextToStep2(); }}
               className="h-12 px-8 rounded-xl font-bold text-white shadow-[0_4px_14px_0_rgba(91,33,182,0.39)] transition-all hover:shadow-[0_6px_20px_rgba(91,33,182,0.23)] hover:-translate-y-0.5 bg-gradient-to-r from-[#4c1d95] to-[#2e1065] hover:from-[#5b21b6] hover:to-[#4c1d95] dark:from-[#5b21b6] dark:to-[#3b0764] dark:hover:from-[#6d28d9] dark:hover:to-[#4c1d95] border-none"
             >
               ถัดไป
             </Button>
           </>
-        ) : (
+        )}
+        {step === 2 && (
           <>
             <Button
               type="button"
               variant="outline"
               onClick={(e) => { e.preventDefault(); setStep(1); }}
+              className="h-12 px-8 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-purple-900/30 border-slate-200 dark:border-purple-800/50 transition-all"
+            >
+              ย้อนกลับ
+            </Button>
+            <Button
+              type="button"
+              onClick={(e) => { e.preventDefault(); handleNextToStep3(); }}
+              className="h-12 px-8 rounded-xl font-bold text-white shadow-[0_4px_14px_0_rgba(91,33,182,0.39)] transition-all hover:shadow-[0_6px_20px_rgba(91,33,182,0.23)] hover:-translate-y-0.5 bg-gradient-to-r from-[#4c1d95] to-[#2e1065] hover:from-[#5b21b6] hover:to-[#4c1d95] dark:from-[#5b21b6] dark:to-[#3b0764] dark:hover:from-[#6d28d9] dark:hover:to-[#4c1d95] border-none"
+            >
+              ถัดไป
+            </Button>
+          </>
+        )}
+        {step === 3 && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={(e) => { e.preventDefault(); setStep(2); }}
               className="h-12 px-8 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-purple-900/30 border-slate-200 dark:border-purple-800/50 transition-all"
             >
               ย้อนกลับ
