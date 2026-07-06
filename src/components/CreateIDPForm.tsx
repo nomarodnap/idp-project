@@ -247,8 +247,8 @@ export function CreateIDPForm() {
                   render={({ field }) => (
                     <Input
                       {...field}
-                      placeholder="เช่น คอร์สพัฒนาบุคลิกภาพ"
-                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.courseTitle ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
+                      placeholder="เช่น คอร์สพัฒนาบุคลิกภาพ, การเขียน React ขั้นสูง"
+                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all md:text-base text-base ${errors.courseTitle ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
                     />
                   )}
                 />
