@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -20,6 +21,7 @@ import {
 const formSchema = z.object({
   devCategory: z.string().min(1, "กรุณาเลือกความรู้ / ทักษะ / สมรรถนะที่ต้องการพัฒนา"),
   devTopic: z.string().min(1, "กรุณาเลือกหัวข้อที่ต้องการพัฒนา"),
+  courseTitle: z.string().min(1, "กรุณากรอกหัวข้อหลักสูตรที่ต้องการ"),
   dev70: z.string().min(1, "กรุณาเลือกการเรียนรู้จากประสบการณ์ (70%)"),
   dev20: z.string().min(1, "กรุณาเลือกการเรียนรู้จากผู้อื่น (20%)"),
   dev10: z.string().min(1, "กรุณาเลือกการเรียนรู้จากการฝึกอบรม (10%)"),
@@ -91,6 +93,7 @@ export function CreateIDPForm() {
     defaultValues: {
       devCategory: "",
       devTopic: "",
+      courseTitle: "",
       dev70: "",
       dev20: "",
       dev10: "",
@@ -99,6 +102,11 @@ export function CreateIDPForm() {
   const watchCategory = useWatch({
     control,
     name: "devCategory",
+  });
+
+  const watchTopic = useWatch({
+    control,
+    name: "devTopic",
   });
 
 
@@ -110,7 +118,8 @@ export function CreateIDPForm() {
   const handleNextStep = async () => {
     const isValid = await trigger([
       "devCategory",
-      "devTopic"
+      "devTopic",
+      "courseTitle"
     ]);
 
     // ป้องกันไม่ให้ zodResolver แสดง error ของหน้า 2 ล่วงหน้า
@@ -123,7 +132,7 @@ export function CreateIDPForm() {
 
   const onError = (errors: any) => {
     // If there are errors in step 1, go back to step 1 to show them
-    if (errors.devCategory || errors.devTopic) {
+    if (errors.devCategory || errors.devTopic || errors.courseTitle) {
       setStep(1);
     }
   };
@@ -211,6 +220,36 @@ export function CreateIDPForm() {
                         ))}
                       </SelectContent>
                     </Select>
+                  )}
+                />
+              </div>
+            )}
+
+            {/* หัวข้อหลักสูตรที่ต้องการ */}
+            {watchTopic && (
+              <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label
+                    className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
+                    htmlFor="courseTitle"
+                  >
+                    หัวข้อหลักสูตรที่ต้องการ
+                  </Label>
+                  {errors.courseTitle && (
+                    <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+                      {errors.courseTitle.message}
+                    </span>
+                  )}
+                </div>
+                <Controller
+                  control={control}
+                  name="courseTitle"
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="เช่น คอร์สพัฒนาบุคลิกภาพ"
+                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.courseTitle ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
+                    />
                   )}
                 />
               </div>
