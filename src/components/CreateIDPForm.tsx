@@ -24,9 +24,9 @@ const formSchema = z.object({
   managerialCompetency: z.string().min(1, "กรุณาเลือกสมรรถนะทางการบริหาร"),
   functionalCompetency: z.string().min(1, "กรุณาเลือกสมรรถนะเฉพาะ"),
   coreCompetency: z.string().min(1, "กรุณาเลือกสมรรถนะหลัก"),
-  dev70: z.string().min(1, "กรุณาเลือกการเรียนรู้จากประสบการณ์ (70%)"),
-  dev20: z.string().min(1, "กรุณาเลือกการเรียนรู้จากผู้อื่น (20%)"),
-  dev10: z.string().min(1, "กรุณาเลือกการเรียนรู้จากการฝึกอบรม (10%)"),
+  dev70: z.string().min(1, "[ระบบอัปเดตแล้ว] กรุณาเลือกการเรียนรู้จากประสบการณ์ (70%)"),
+  dev20: z.string().min(1, "[ระบบอัปเดตแล้ว] กรุณาเลือกการเรียนรู้จากผู้อื่น (20%)"),
+  dev10: z.string().min(1, "[ระบบอัปเดตแล้ว] กรุณาเลือกการเรียนรู้จากการฝึกอบรม (10%)"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
