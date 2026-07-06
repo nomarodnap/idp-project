@@ -20,7 +20,7 @@ export default function CreateIDPPage() {
         </Link>
         <div>
           <h1 className="text-3xl font-black tracking-tight text-[#2e1065] dark:text-white">
-            สร้างแผนพัฒนารายบุคคล (New IDP) ประจำปี {thaiFiscalYear}
+            สร้างแผนพัฒนารายบุคคล ประจำปีงบประมาณ {thaiFiscalYear}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">กรอกข้อมูลเพื่อจัดทำแผนพัฒนาสมรรถนะของคุณในรอบประเมินนี้</p>
         </div>
