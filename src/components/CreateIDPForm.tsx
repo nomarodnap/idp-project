@@ -60,22 +60,26 @@ export function CreateIDPForm() {
     // TODO: Proceed to next step based on user requirements
   }
 
-  const handleNextStep = async () => {
-    const isValid = await trigger([
-      "knowledge",
-      "skill",
-      "requiredCompetency",
-      "managerialCompetency",
-      "functionalCompetency",
-      "coreCompetency",
-    ]);
-    if (isValid) {
-      setStep(2);
+  const handleNextStep = () => {
+    setStep(2);
+  };
+
+  const onError = (errors: any) => {
+    // If there are errors in step 1, go back to step 1 to show them
+    if (
+      errors.knowledge ||
+      errors.skill ||
+      errors.requiredCompetency ||
+      errors.managerialCompetency ||
+      errors.functionalCompetency ||
+      errors.coreCompetency
+    ) {
+      setStep(1);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-8">
       {/* หัวข้อใหญ่หลัก */}
       {step === 1 && (
         <div className="space-y-6 bg-slate-50/50 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-purple-800/30 shadow-sm">
