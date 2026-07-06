@@ -39,6 +39,7 @@ export function CreateIDPForm() {
     control,
     handleSubmit,
     trigger,
+    clearErrors,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema) as any,
@@ -60,8 +61,22 @@ export function CreateIDPForm() {
     // TODO: Proceed to next step based on user requirements
   }
 
-  const handleNextStep = () => {
-    setStep(2);
+  const handleNextStep = async () => {
+    const isValid = await trigger([
+      "knowledge",
+      "skill",
+      "requiredCompetency",
+      "managerialCompetency",
+      "functionalCompetency",
+      "coreCompetency",
+    ]);
+
+    // ป้องกันไม่ให้ zodResolver แสดง error ของหน้า 2 ล่วงหน้า
+    clearErrors(["dev70", "dev20", "dev10"]);
+
+    if (isValid) {
+      setStep(2);
+    }
   };
 
   const onError = (errors: any) => {
