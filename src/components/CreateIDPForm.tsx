@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { z } from "zod";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 
@@ -18,16 +18,59 @@ import {
 } from "@/components/ui/select";
 
 const formSchema = z.object({
-  knowledge: z.string().min(1, "กรุณาเลือกความรู้ความสามารถที่จำเป็น"),
-  skill: z.string().min(1, "กรุณาเลือกทักษะ"),
-  requiredCompetency: z.string().min(1, "กรุณาเลือกสมรรถนะที่จำเป็น"),
-  managerialCompetency: z.string().min(1, "กรุณาเลือกสมรรถนะทางการบริหาร"),
-  functionalCompetency: z.string().min(1, "กรุณาเลือกสมรรถนะเฉพาะ"),
-  coreCompetency: z.string().min(1, "กรุณาเลือกสมรรถนะหลัก"),
+  devCategory: z.string().min(1, "กรุณาเลือกความรู้ / ทักษะ / สมรรถนะที่ต้องการพัฒนา"),
+  devTopic: z.string().min(1, "กรุณาเลือกหัวข้อที่ต้องการพัฒนา"),
   dev70: z.string().min(1, "กรุณาเลือกการเรียนรู้จากประสบการณ์ (70%)"),
   dev20: z.string().min(1, "กรุณาเลือกการเรียนรู้จากผู้อื่น (20%)"),
   dev10: z.string().min(1, "กรุณาเลือกการเรียนรู้จากการฝึกอบรม (10%)"),
 });
+
+const categoryOptions = {
+  "ความรู้ความสามารถที่จำเป็นสำหรับการปฏิบัติงาน": [
+    "ความรู้ความสามารถที่ใช้ในการปฏิบัติงาน",
+    "ความรู้เรื่องกฏหมายและกฏระเบียบทางราชการ"
+  ],
+  "ทักษะ": [
+    "การใช้คอมพิวเตอร์",
+    "การใช้ภาษา",
+    "การคำนวณ",
+    "การจัดการข้อมูล"
+  ],
+  "สมรรถนะที่จำเป็น": [
+    "การทำงานที่เป็นเลิศ",
+    "การยึดมั่นในความถูกต้องและมีจิตบริการ",
+    "การประสานความร่วมมือร่วมใจ",
+    "ความยืดหยุ่น คล่องตัว ริเริ่มสร้างสรรค์"
+  ],
+  "สมรรถนะทางการบริหาร": [
+    "การสื่อสารและการสร้างความผูกพันธ์",
+    "การเรียนรู้และพัฒนา",
+    "การปฏิรูป / ปรับเปลี่ยนราชการสู่อนาคต",
+    "การรักษาวินัย คุณธรรม และจริยธรรม"
+  ],
+  "สมรรถนะเฉพาะตามลักษณะงานที่ปฏิบัติ": [
+    "การคิดวิเคราะห์",
+    "การมองภาพองค์รวม",
+    "การแสดงความรับผิดชอบตามหน้าที่",
+    "การสืบเสาะหาข้อมูล",
+    "การตรวจสอบความถูกต้องตามกระบวนงาน",
+    "ความเข้าใจองค์กรและระบบราชการ",
+    "การดำเนินการเชิงรุก",
+    "ความมั่นใจในตนเอง",
+    "สุนทรียภาพทางศิลปะ",
+    "ความคิดสร้างสรรค์",
+    "การใส่ใจและพัฒนาผู้อื่น"
+  ],
+  "สมรรถนะหลัก": [
+    "ความสามารถ และความอุตสาหะในการปฏิบัติงาน",
+    "การรักษาวินัย และปฏิบัติตนเหมาะสมกับการเป็นลูกจ้างประจำ",
+    "ความรับผิดชอบ",
+    "ความร่วมมือ",
+    "สภาพการมาปฏิบัติงาน",
+    "การวางแผน",
+    "ความคิดริเริ่ม"
+  ]
+};
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -41,21 +84,23 @@ export function CreateIDPForm() {
     handleSubmit,
     trigger,
     clearErrors,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
-      knowledge: "",
-      skill: "",
-      requiredCompetency: "",
-      managerialCompetency: "",
-      functionalCompetency: "",
-      coreCompetency: "",
+      devCategory: "",
+      devTopic: "",
       dev70: "",
       dev20: "",
       dev10: "",
     },
   });
+  const watchCategory = useWatch({
+    control,
+    name: "devCategory",
+  });
+
 
   function onSubmit(data: FormValues) {
     console.log("Submitted Data:", data);
@@ -64,12 +109,8 @@ export function CreateIDPForm() {
 
   const handleNextStep = async () => {
     const isValid = await trigger([
-      "knowledge",
-      "skill",
-      "requiredCompetency",
-      "managerialCompetency",
-      "functionalCompetency",
-      "coreCompetency",
+      "devCategory",
+      "devTopic"
     ]);
 
     // ป้องกันไม่ให้ zodResolver แสดง error ของหน้า 2 ล่วงหน้า
@@ -82,14 +123,7 @@ export function CreateIDPForm() {
 
   const onError = (errors: any) => {
     // If there are errors in step 1, go back to step 1 to show them
-    if (
-      errors.knowledge ||
-      errors.skill ||
-      errors.requiredCompetency ||
-      errors.managerialCompetency ||
-      errors.functionalCompetency ||
-      errors.coreCompetency
-    ) {
+    if (errors.devCategory || errors.devTopic) {
       setStep(1);
     }
   };
@@ -99,293 +133,88 @@ export function CreateIDPForm() {
       {/* หัวข้อใหญ่หลัก */}
       {step === 1 && (
         <div className="space-y-6 bg-slate-50/50 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-purple-800/30 shadow-sm">
-          <h2 className="text-xl font-bold text-[#2e1065] dark:text-purple-100 border-b-2 border-purple-100 dark:border-purple-800/50 pb-3 flex items-center gap-3">
-            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-200 text-sm">
-              1
-            </span>
-            ความรู้ / ทักษะ / สมรรถนะที่ต้องการพัฒนา
-          </h2>
-
-          <div className="flex flex-col space-y-8 mt-6">
-            {/* ความรู้ความสามารถที่จำเป็นสำหรับการปฏิบัติงาน */}
+          <div className="flex flex-col space-y-8">
+            {/* หมวดหมู่หลัก */}
             <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Label
                   className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
-                  htmlFor="knowledge"
+                  htmlFor="devCategory"
                 >
-                  ความรู้ความสามารถที่จำเป็นสำหรับการปฏิบัติงาน
+                  ความรู้ / ทักษะ / สมรรถนะที่ต้องการพัฒนา
                 </Label>
-                {errors.knowledge && (
+                {errors.devCategory && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
-                    {errors.knowledge.message}
+                    {errors.devCategory.message}
                   </span>
                 )}
               </div>
               <Controller
                 control={control}
-                name="knowledge"
+                name="devCategory"
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select 
+                    onValueChange={(val) => {
+                      field.onChange(val);
+                      setValue("devTopic", "");
+                    }} 
+                    value={field.value}
+                  >
                     <SelectTrigger
-                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.knowledge ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
+                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.devCategory ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
                     >
-                      <SelectValue placeholder="-- เลือกความรู้ความสามารถ --" />
+                      <SelectValue placeholder="-- เลือกระดับความต้องการพัฒนา --" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ความรู้ความสามารถที่ใช้ในการปฏิบัติงาน">
-                        ความรู้ความสามารถที่ใช้ในการปฏิบัติงาน
-                      </SelectItem>
-                      <SelectItem value="ความรู้เรื่องกฏหมายและกฏระเบียบทางราชการ">
-                        ความรู้เรื่องกฏหมายและกฏระเบียบทางราชการ
-                      </SelectItem>
+                      {Object.keys(categoryOptions).map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
               />
             </div>
 
-            {/* ทักษะ */}
-            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label
-                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
-                  htmlFor="skill"
-                >
-                  ทักษะ
-                </Label>
-                {errors.skill && (
-                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
-                    {errors.skill.message}
-                  </span>
-                )}
+            {/* หัวข้อย่อย */}
+            {watchCategory && (
+              <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label
+                    className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
+                    htmlFor="devTopic"
+                  >
+                    {watchCategory}
+                  </Label>
+                  {errors.devTopic && (
+                    <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+                      {errors.devTopic.message}
+                    </span>
+                  )}
+                </div>
+                <Controller
+                  control={control}
+                  name="devTopic"
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger
+                        className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.devTopic ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
+                      >
+                        <SelectValue placeholder={`-- เลือก${watchCategory} --`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoryOptions[watchCategory as keyof typeof categoryOptions]?.map((topic) => (
+                          <SelectItem key={topic} value={topic}>
+                            {topic}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
-              <Controller
-                control={control}
-                name="skill"
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger
-                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.skill ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
-                    >
-                      <SelectValue placeholder="-- เลือกทักษะ --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="การใช้คอมพิวเตอร์">
-                        การใช้คอมพิวเตอร์
-                      </SelectItem>
-                      <SelectItem value="การใช้ภาษา">การใช้ภาษา</SelectItem>
-                      <SelectItem value="การคำนวณ">การคำนวณ</SelectItem>
-                      <SelectItem value="การจัดการข้อมูล">
-                        การจัดการข้อมูล
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-
-            {/* สมรรถนะที่จำเป็น */}
-            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label
-                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
-                  htmlFor="requiredCompetency"
-                >
-                  สมรรถนะที่จำเป็น
-                </Label>
-                {errors.requiredCompetency && (
-                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
-                    {errors.requiredCompetency.message}
-                  </span>
-                )}
-              </div>
-              <Controller
-                control={control}
-                name="requiredCompetency"
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger
-                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.requiredCompetency ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
-                    >
-                      <SelectValue placeholder="-- เลือกสมรรถนะที่จำเป็น --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="การทำงานที่เป็นเลิศ">
-                        การทำงานที่เป็นเลิศ
-                      </SelectItem>
-                      <SelectItem value="การยึดมั่นในความถูกต้องและมีจิตบริการ">
-                        การยึดมั่นในความถูกต้องและมีจิตบริการ
-                      </SelectItem>
-                      <SelectItem value="การประสานความร่วมมือร่วมใจ">
-                        การประสานความร่วมมือร่วมใจ
-                      </SelectItem>
-                      <SelectItem value="ความยืดหยุ่น คล่องตัว ริเริ่มสร้างสรรค์">
-                        ความยืดหยุ่น คล่องตัว ริเริ่มสร้างสรรค์
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-
-            {/* สมรรถนะทางการบริหาร */}
-            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label
-                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
-                  htmlFor="managerialCompetency"
-                >
-                  สมรรถนะทางการบริหาร
-                </Label>
-                {errors.managerialCompetency && (
-                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
-                    {errors.managerialCompetency.message}
-                  </span>
-                )}
-              </div>
-              <Controller
-                control={control}
-                name="managerialCompetency"
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger
-                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.managerialCompetency ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
-                    >
-                      <SelectValue placeholder="-- เลือกสมรรถนะทางการบริหาร --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="การสื่อสารและการสร้างความผูกพันธ์">
-                        การสื่อสารและการสร้างความผูกพันธ์
-                      </SelectItem>
-                      <SelectItem value="การเรียนรู้และพัฒนา">
-                        การเรียนรู้และพัฒนา
-                      </SelectItem>
-                      <SelectItem value="การปฏิรูป / ปรับเปลี่ยนราชการสู่อนาคต">
-                        การปฏิรูป / ปรับเปลี่ยนราชการสู่อนาคต
-                      </SelectItem>
-                      <SelectItem value="การรักษาวินัย คุณธรรม และจริยธรรม">
-                        การรักษาวินัย คุณธรรม และจริยธรรม
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-
-            {/* สมรรถนะเฉพาะตามลักษณะงานที่ปฏิบัติ */}
-            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label
-                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
-                  htmlFor="functionalCompetency"
-                >
-                  สมรรถนะเฉพาะตามลักษณะงานที่ปฏิบัติ
-                </Label>
-                {errors.functionalCompetency && (
-                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
-                    {errors.functionalCompetency.message}
-                  </span>
-                )}
-              </div>
-              <Controller
-                control={control}
-                name="functionalCompetency"
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger
-                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.functionalCompetency ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
-                    >
-                      <SelectValue placeholder="-- เลือกสมรรถนะเฉพาะ --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="การคิดวิเคราะห์">
-                        การคิดวิเคราะห์
-                      </SelectItem>
-                      <SelectItem value="การมองภาพองค์รวม">
-                        การมองภาพองค์รวม
-                      </SelectItem>
-                      <SelectItem value="การแสดงความรับผิดชอบตามหน้าที่">
-                        การแสดงความรับผิดชอบตามหน้าที่
-                      </SelectItem>
-                      <SelectItem value="การสืบเสาะหาข้อมูล">
-                        การสืบเสาะหาข้อมูล
-                      </SelectItem>
-                      <SelectItem value="การตรวจสอบความถูกต้องตามกระบวนงาน">
-                        การตรวจสอบความถูกต้องตามกระบวนงาน
-                      </SelectItem>
-                      <SelectItem value="ความเข้าใจองค์กรและระบบราชการ">
-                        ความเข้าใจองค์กรและระบบราชการ
-                      </SelectItem>
-                      <SelectItem value="การดำเนินการเชิงรุก">
-                        การดำเนินการเชิงรุก
-                      </SelectItem>
-                      <SelectItem value="ความมั่นใจในตนเอง">
-                        ความมั่นใจในตนเอง
-                      </SelectItem>
-                      <SelectItem value="สุนทรียภาพทางศิลปะ">
-                        สุนทรียภาพทางศิลปะ
-                      </SelectItem>
-                      <SelectItem value="ความคิดสร้างสรรค์">
-                        ความคิดสร้างสรรค์
-                      </SelectItem>
-                      <SelectItem value="การใส่ใจและพัฒนาผู้อื่น">
-                        การใส่ใจและพัฒนาผู้อื่น
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-
-            {/* สมรรถนะหลัก */}
-            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label
-                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
-                  htmlFor="coreCompetency"
-                >
-                  สมรรถนะหลัก
-                </Label>
-                {errors.coreCompetency && (
-                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in duration-300">
-                    {errors.coreCompetency.message}
-                  </span>
-                )}
-              </div>
-              <Controller
-                control={control}
-                name="coreCompetency"
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger
-                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.coreCompetency ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
-                    >
-                      <SelectValue placeholder="-- เลือกสมรรถนะหลัก --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ความสามารถ และความอุตสาหะในการปฏิบัติงาน">
-                        ความสามารถ และความอุตสาหะในการปฏิบัติงาน
-                      </SelectItem>
-                      <SelectItem value="การรักษาวินัย และปฏิบัติตนเหมาะสมกับการเป็นลูกจ้างประจำ">
-                        การรักษาวินัย และปฏิบัติตนเหมาะสมกับการเป็นลูกจ้างประจำ
-                      </SelectItem>
-                      <SelectItem value="ความรับผิดชอบ">
-                        ความรับผิดชอบ
-                      </SelectItem>
-                      <SelectItem value="ความร่วมมือ">ความร่วมมือ</SelectItem>
-                      <SelectItem value="สภาพการมาปฏิบัติงาน">
-                        สภาพการมาปฏิบัติงาน
-                      </SelectItem>
-                      <SelectItem value="การวางแผน">การวางแผน</SelectItem>
-                      <SelectItem value="ความคิดริเริ่ม">
-                        ความคิดริเริ่ม
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
+            )}
           </div>
         </div>
       )}
