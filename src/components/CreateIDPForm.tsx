@@ -652,14 +652,14 @@ export function CreateIDPForm() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push("/")}
+              onClick={(e) => { e.preventDefault(); router.push("/"); }}
               className="h-12 px-8 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-purple-900/30 border-slate-200 dark:border-purple-800/50 transition-all"
             >
               ยกเลิก
             </Button>
             <Button
               type="button"
-              onClick={handleNextStep}
+              onClick={(e) => { e.preventDefault(); handleNextStep(); }}
               className="h-12 px-8 rounded-xl font-bold text-white shadow-[0_4px_14px_0_rgba(91,33,182,0.39)] transition-all hover:shadow-[0_6px_20px_rgba(91,33,182,0.23)] hover:-translate-y-0.5 bg-gradient-to-r from-[#4c1d95] to-[#2e1065] hover:from-[#5b21b6] hover:to-[#4c1d95] dark:from-[#5b21b6] dark:to-[#3b0764] dark:hover:from-[#6d28d9] dark:hover:to-[#4c1d95] border-none"
             >
               ถัดไป
@@ -670,7 +670,7 @@ export function CreateIDPForm() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setStep(1)}
+              onClick={(e) => { e.preventDefault(); setStep(1); }}
               className="h-12 px-8 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-purple-900/30 border-slate-200 dark:border-purple-800/50 transition-all"
             >
               ย้อนกลับ
