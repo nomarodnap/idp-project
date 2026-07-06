@@ -5,6 +5,12 @@ import { CreateIDPForm } from "@/components/CreateIDPForm";
 import { cn } from "@/lib/utils";
 
 export default function CreateIDPPage() {
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth(); // 0 = Jan, 9 = Oct
+  const gregorianYear = currentDate.getFullYear();
+  const isNewFiscalYear = currentMonth >= 9; // October or later starts new fiscal year
+  const thaiFiscalYear = gregorianYear + 543 + (isNewFiscalYear ? 1 : 0);
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Page Header */}
@@ -13,7 +19,9 @@ export default function CreateIDPPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-[#2e1065] dark:text-white">สร้างแผนพัฒนารายบุคคล (New IDP)</h1>
+          <h1 className="text-3xl font-black tracking-tight text-[#2e1065] dark:text-white">
+            สร้างแผนพัฒนารายบุคคล (New IDP) ประจำปี {thaiFiscalYear}
+          </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">กรอกข้อมูลเพื่อจัดทำแผนพัฒนาสมรรถนะของคุณในรอบประเมินนี้</p>
         </div>
       </div>
