@@ -52,7 +52,11 @@ export function Header() {
               {user?.name || "ผู้ใช้งานระบบ"}
             </span>
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-none">
-              {user?.position || "บุคลากร"}
+              {user 
+                ? (user.employeeType === "ข้าราชการพลเรือนสามัญ" 
+                    ? `${user.position || ""}${user.level || ""}`
+                    : user.position || "บุคลากร")
+                : "บุคลากร"}
             </span>
           </div>
           <Avatar className="h-10 w-10 border-2 border-purple-100 dark:border-purple-800 shadow-sm cursor-pointer hover:border-amber-400 dark:hover:border-amber-500 transition-colors">
