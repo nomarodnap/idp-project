@@ -1,0 +1,53 @@
+import { pgTable, uuid, varchar, timestamp, text, integer, date } from "drizzle-orm/pg-core";
+
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(), // UUID (Primary Key)
+  citizenId: varchar("citizen_id", { length: 13 }).notNull().unique(), // รหัสบัตรประจำตัวประชาชน
+  title: varchar("title", { length: 50 }), // คำนำหน้าชื่อ
+  firstName: varchar("first_name", { length: 100 }).notNull(), // ชื่อจริง
+  lastName: varchar("last_name", { length: 100 }).notNull(), // นามสกุล
+  employeeType: varchar("employee_type", { length: 100 }), // ประเภท
+  position: varchar("position", { length: 150 }), // ตำแหน่ง
+  level: varchar("level", { length: 100 }), // ระดับ
+  department: varchar("department", { length: 255 }), // กอง/สำนักงาน
+  division: varchar("division", { length: 255 }), // กลุ่ม/ฝ่าย
+  avatarUrl: varchar("avatar_url", { length: 255 }), // ลิงก์รูปภาพ
+  createdAt: timestamp("created_at").defaultNow().notNull(), // created_at
+  updatedAt: timestamp("updated_at").defaultNow().notNull(), // updated_at
+});
+
+export const idpPlans = pgTable("idp_plans", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  fiscalYear: integer("fiscal_year").notNull(),
+  devCategory: varchar("dev_category", { length: 255 }).notNull(),
+  devTopic: varchar("dev_topic", { length: 255 }).notNull(),
+  courseTitle: varchar("course_title", { length: 255 }).notNull(),
+  dev70: text("dev_70").notNull(),
+  dev20: text("dev_20").notNull(),
+  dev10: text("dev_10").notNull(),
+  supervisorName: varchar("supervisor_name", { length: 255 }).notNull(),
+  status: varchar("status", { length: 50 }).notNull().default('Draft'), // Draft, Pending, Approved, Rejected, Completed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const idpEvaluations = pgTable("idp_evaluations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  idpId: uuid("idp_id").notNull().references(() => idpPlans.id, { onDelete: 'cascade' }),
+  progressPercent: integer("progress_percent").notNull().default(0),
+  completionDate: date("completion_date"),
+  certificateUrl: varchar("certificate_url", { length: 255 }),
+  reportText: text("report_text"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const idpApprovals = pgTable("idp_approvals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  idpId: uuid("idp_id").notNull().references(() => idpPlans.id, { onDelete: 'cascade' }),
+  approverId: uuid("approver_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: varchar("status", { length: 50 }).notNull(), // Approved, Rejected
+  comment: text("comment"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
