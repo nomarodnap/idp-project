@@ -7,14 +7,15 @@ import { cn } from "@/lib/utils";
 const STYLES = [
   "avataaars", "big-smile", "fun-emoji", "bottts", 
   "adventurer", "personas", "pixel-art", "micah", 
-  "lorelei", "notionists"
+  "lorelei", "notionists", "miniavs", "open-peeps",
+  "big-ears", "croodles", "shapes"
 ];
 const COLORS = [
-  "f3e8ff", "e0e7ff", "fce7f3", "dcfce7", "ffedd5", "fef08a", "ffdfbf", "e2e8f0"
+  "f3e8ff", "e0e7ff", "fce7f3", "dcfce7", "ffedd5", "fef08a", "ffdfbf", "e2e8f0", "cffafe", "fef9c3", "ffed4a", "ff7e67"
 ];
 
-// สร้าง Avatar 200 แบบ
-const AVATAR_OPTIONS = Array.from({ length: 200 }).map((_, i) => {
+// สร้าง Avatar 300 แบบ
+const AVATAR_OPTIONS = Array.from({ length: 300 }).map((_, i) => {
   const style = STYLES[i % STYLES.length];
   const color = COLORS[i % COLORS.length];
   // ใส่ accessories หรือลูกเล่นแบบสุ่ม (อิงตาม Index เพื่อไม่ให้ Hydration Error)
@@ -22,6 +23,8 @@ const AVATAR_OPTIONS = Array.from({ length: 200 }).map((_, i) => {
   if (style === "avataaars" && i % 3 === 0) extra = "&accessories=sunglasses";
   if (style === "avataaars" && i % 4 === 0) extra = "&facialHair=beardLight";
   if (style === "bottts" && i % 2 === 0) extra = "&texture=camo";
+  if (style === "bottts" && i % 3 === 0) extra = "&eyes=bulging";
+  if (style === "adventurer" && i % 2 === 0) extra = "&glasses=variant02";
   
   return `https://api.dicebear.com/7.x/${style}/svg?seed=Fisheries${i}&backgroundColor=${color}${extra}`;
 });
