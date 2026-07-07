@@ -110,6 +110,17 @@ export default function LoginPage() {
           <div className="mt-8 text-center text-sm text-slate-500 font-medium">
             &copy; {new Date().getFullYear()} กรมประมง (Department of Fisheries).
           </div>
+          
+          {/* Debug Block */}
+          <div className="mt-8 p-4 bg-black/80 rounded-xl text-xs text-green-400 font-mono break-all text-left overflow-x-auto w-full">
+            <h3 className="text-white font-bold mb-2">=== Vercel Environment Variables Debug ===</h3>
+            <p><strong>DPIS_DOMAIN:</strong> {process.env.DPIS_DOMAIN || "UNDEFINED"}</p>
+            <p><strong>DPIS_API_USER:</strong> {process.env.DPIS_API_USER ? "SET" : "UNDEFINED"}</p>
+            <p><strong>DPIS_API_PASS:</strong> {process.env.DPIS_API_PASS ? "SET" : "UNDEFINED"}</p>
+            <p><strong>DATABASE_URL:</strong> {process.env.DATABASE_URL ? "SET (Starts with: " + process.env.DATABASE_URL.substring(0, 15) + "...)" : "UNDEFINED"}</p>
+            <p><strong>BETTER_AUTH_SECRET:</strong> {process.env.BETTER_AUTH_SECRET ? "SET" : "UNDEFINED"}</p>
+            <p><strong>BETTER_AUTH_URL:</strong> {process.env.BETTER_AUTH_URL || "UNDEFINED"}</p>
+          </div>
         </div>
 
       </div>
