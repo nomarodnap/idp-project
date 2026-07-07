@@ -50,11 +50,15 @@ export default function ProfileClient({ user }: { user: any }) {
             </div>
             
             <h2 className="text-lg font-bold text-[#2e1065] dark:text-purple-100">{user.name}</h2>
-            <p className="text-sm text-slate-500 dark:text-purple-200/70 font-medium mb-6">{user.position}</p>
+            <p className="text-sm text-slate-500 dark:text-purple-200/70 font-medium mb-6">
+              {user.employeeType === "ข้าราชการพลเรือนสามัญ" 
+                ? `${user.position || ""}${user.level || ""}`
+                : user.position || "-"}
+            </p>
 
             <div className="w-full">
               <p className="text-sm font-bold text-slate-700 dark:text-purple-200 mb-3 text-left flex items-center gap-2">
-                เลือกรูปโปรไฟล์ (อวาตาร์) <span className="text-xs font-normal text-slate-500">(สายฮาก็มีนะ!)</span>
+                เลือกรูปโปรไฟล์ (อวาตาร์)
               </p>
               
               <div className="h-80 overflow-y-auto pr-2 custom-scrollbar">
