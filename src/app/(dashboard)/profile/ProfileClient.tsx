@@ -4,7 +4,7 @@ import { useUser } from "@/components/UserProvider";
 import { User, Mail, Briefcase, Camera, Check, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { updateAvatar } from "@/actions/user";
-import { useTransition } from "react";
+import { useTransition, useRef } from "react";
 
 const STYLES = [
   "avataaars", "big-smile", "fun-emoji", "bottts", 
@@ -34,6 +34,7 @@ const AVATAR_OPTIONS = Array.from({ length: 300 }).map((_, i) => {
 export default function ProfileClient({ user }: { user: any }) {
   const { avatarUrl, setAvatarUrl } = useUser();
   const [isPending, startTransition] = useTransition();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarSelect = (url: string) => {
     // Optimistic update
@@ -47,6 +48,49 @@ export default function ProfileClient({ user }: { user: any }) {
     });
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_SIZE = 200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const base64String = canvas.toDataURL("image/webp", 0.8);
+        handleAvatarSelect(base64String);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input so the same file can be selected again if needed
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="space-y-8 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col space-y-2">
@@ -58,13 +102,24 @@ export default function ProfileClient({ user }: { user: any }) {
         {/* Left Column: Avatar Selection */}
         <div className="md:col-span-1 space-y-6">
           <div className="bg-white dark:bg-[#150a29] rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-purple-800/50 flex flex-col items-center text-center">
-            <div className="relative mb-6">
+            <div className="relative mb-6 group">
               <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-purple-50 dark:border-purple-900/50 shadow-inner">
-                <img src={avatarUrl} alt="Current Avatar" className="h-full w-full object-cover" />
+                <img src={avatarUrl} alt="Current Avatar" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
               </div>
-              <div className="absolute bottom-0 right-0 bg-amber-500 text-white p-2 rounded-full shadow-lg border-2 border-white dark:border-[#150a29]">
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                accept="image/*" 
+                className="hidden" 
+              />
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-0 right-0 bg-amber-500 text-white p-2 rounded-full shadow-lg border-2 border-white dark:border-[#150a29] hover:bg-amber-400 transition-colors cursor-pointer"
+                title="อัปโหลดรูปโปรไฟล์"
+              >
                 <Camera className="w-4 h-4" />
-              </div>
+              </button>
             </div>
             
             <h2 className="text-lg font-bold text-[#2e1065] dark:text-purple-100">{user.name}</h2>

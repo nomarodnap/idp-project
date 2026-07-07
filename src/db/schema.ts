@@ -19,7 +19,7 @@ export const users = pgTable("users", {
   level: varchar("level", { length: 100 }), // ระดับ
   department: varchar("department", { length: 255 }), // กอง/สำนักงาน
   division: varchar("division", { length: 255 }), // กลุ่ม/ฝ่าย
-  avatarUrl: varchar("avatar_url", { length: 255 }), // ลิงก์รูปภาพ
+  avatarUrl: text("avatar_url"), // ลิงก์รูปภาพ หรือ Base64 Image
   
   createdAt: timestamp("created_at").defaultNow().notNull(), // created_at
   updatedAt: timestamp("updated_at").defaultNow().notNull(), // updated_at
