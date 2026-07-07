@@ -8,11 +8,11 @@ import { cookies, headers } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 
-const DOMAIN_SERVER = process.env.DPIS_DOMAIN;
-const USER_API = process.env.DPIS_API_USER;
-const PASSWORD_API = process.env.DPIS_API_PASS;
-
 async function getToken() {
+  const DOMAIN_SERVER = process.env.DPIS_DOMAIN;
+  const USER_API = process.env.DPIS_API_USER;
+  const PASSWORD_API = process.env.DPIS_API_PASS;
+
   try {
     const response = await axios.post(`${DOMAIN_SERVER}oapi/login`, {
       username: USER_API,
@@ -30,6 +30,7 @@ function generateSessionToken() {
 }
 
 export async function loginWithDPIS(formData: FormData) {
+  const DOMAIN_SERVER = process.env.DPIS_DOMAIN;
   const citizenId = formData.get("citizenId") as string;
   const password = formData.get("password") as string;
 
