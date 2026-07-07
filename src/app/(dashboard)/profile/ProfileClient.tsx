@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser } from "@/components/UserProvider";
-import { User, Mail, Briefcase, Camera, Check } from "lucide-react";
+import { User, Mail, Briefcase, Camera, Check, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STYLES = [
@@ -115,10 +115,18 @@ export default function ProfileClient({ user }: { user: any }) {
               </div>
 
               <div className="space-y-2 sm:col-span-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-purple-200">ตำแหน่ง / สังกัด</label>
+                <label className="text-sm font-bold text-slate-700 dark:text-purple-200">ตำแหน่ง</label>
                 <div className="h-11 px-4 bg-slate-50 dark:bg-[#1a0b2e] border border-slate-200 dark:border-purple-900/50 rounded-xl flex items-center text-slate-700 dark:text-slate-300 font-medium gap-2">
                   <Briefcase className="w-4 h-4 text-slate-400" />
-                  {user.position} {user.level ? `(${user.level})` : ''} - {user.department} {user.division ? ` / ${user.division}` : ''}
+                  {user.position} {user.level ? `(${user.level})` : ''}
+                </div>
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <label className="text-sm font-bold text-slate-700 dark:text-purple-200">สังกัด</label>
+                <div className="h-11 px-4 bg-slate-50 dark:bg-[#1a0b2e] border border-slate-200 dark:border-purple-900/50 rounded-xl flex items-center text-slate-700 dark:text-slate-300 font-medium gap-2">
+                  <MapPin className="w-4 h-4 text-slate-400" />
+                  {user.department} {user.division ? ` / ${user.division}` : ''}
                 </div>
               </div>
             </div>
