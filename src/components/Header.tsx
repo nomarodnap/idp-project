@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Search, Bell, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,12 +18,12 @@ export function Header() {
         <Button variant="ghost" size="icon" className="md:hidden">
           <Menu className="w-5 h-5" />
         </Button>
-        <div className="flex items-center md:hidden gap-2">
+        <Link href="/" className="flex items-center md:hidden gap-2 hover:opacity-80 transition-opacity">
           <div className="h-8 w-8 rounded-full bg-white dark:bg-white/10 shadow-sm border border-amber-200/50 dark:border-amber-500/30 p-0.5 overflow-hidden">
             <img src="/logo-fisheries.png" alt="กรมประมง" className="w-full h-full object-contain rounded-full" />
           </div>
           <span className="font-bold text-lg tracking-tight text-[#2e1065] dark:text-white">ระบบ IDP</span>
-        </div>
+        </Link>
 
         <div className="hidden md:flex relative w-96 group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 group-focus-within:text-purple-500 transition-colors" />
@@ -59,10 +60,12 @@ export function Header() {
                 : "บุคลากร"}
             </span>
           </div>
-          <Avatar className="h-10 w-10 border-2 border-purple-100 dark:border-purple-800 shadow-sm cursor-pointer hover:border-amber-400 dark:hover:border-amber-500 transition-colors">
-            <AvatarImage src={avatarUrl} alt="User Avatar" />
-            <AvatarFallback className="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 font-bold">ส</AvatarFallback>
-          </Avatar>
+          <Link href="/profile">
+            <Avatar className="h-10 w-10 border-2 border-purple-100 dark:border-purple-800 shadow-sm cursor-pointer hover:border-amber-400 dark:hover:border-amber-500 transition-colors">
+              <AvatarImage src={avatarUrl} alt="User Avatar" />
+              <AvatarFallback className="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 font-bold">ส</AvatarFallback>
+            </Avatar>
+          </Link>
         </div>
       </div>
     </header>

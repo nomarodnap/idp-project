@@ -35,7 +35,7 @@ export function Sidebar() {
       <div className={cn("h-20 flex items-center border-b border-slate-100 dark:border-purple-900/50 relative overflow-hidden", isCollapsed ? "px-0 justify-center" : "px-6")}>
         {/* Subtle gradient accent */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 via-purple-600 to-amber-400" />
-        <div className={cn("flex items-center gap-3", isCollapsed ? "justify-center w-full px-0" : "")}>
+        <Link href="/" className={cn("flex items-center gap-3 hover:opacity-80 transition-opacity", isCollapsed ? "justify-center w-full px-0" : "")}>
           <div className="h-10 w-10 rounded-full bg-white dark:bg-white/10 shadow-md border border-amber-200/50 dark:border-amber-500/30 p-0.5 shrink-0 overflow-hidden relative group">
             <img src="/logo-fisheries.png" alt="กรมประมง" className="w-full h-full object-contain rounded-full transition-transform duration-500 group-hover:scale-110" />
           </div>
@@ -45,7 +45,7 @@ export function Sidebar() {
               <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest">กรมประมง</span>
             </div>
           )}
-        </div>
+        </Link>
       </div>
 
       {/* Navigation */}
