@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { Metadata } from "next";
 import { LoginForm } from "@/components/LoginForm";
 import { Sparkles } from "lucide-react";
