@@ -123,18 +123,17 @@ export default function ProfileClient({ user }: { user: any }) {
               </div>
 
               <div className="space-y-2 sm:col-span-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-purple-200">กอง / สำนัก (Department)</label>
-                <div className="h-11 px-4 bg-slate-50 dark:bg-[#1a0b2e] border border-slate-200 dark:border-purple-900/50 rounded-xl flex items-center text-slate-700 dark:text-slate-300 font-medium gap-2">
-                  <MapPin className="w-4 h-4 text-slate-400" />
-                  {user.department || "-"}
-                </div>
-              </div>
-
-              <div className="space-y-2 sm:col-span-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-purple-200">กลุ่ม / ฝ่าย (Division)</label>
-                <div className="h-11 px-4 bg-slate-50 dark:bg-[#1a0b2e] border border-slate-200 dark:border-purple-900/50 rounded-xl flex items-center text-slate-700 dark:text-slate-300 font-medium gap-2">
-                  <MapPin className="w-4 h-4 text-slate-400" />
-                  {user.division || "-"}
+                <label className="text-sm font-bold text-slate-700 dark:text-purple-200">สังกัด (Department / Division)</label>
+                <div className="py-2.5 px-4 bg-slate-50 dark:bg-[#1a0b2e] border border-slate-200 dark:border-purple-900/50 rounded-xl flex flex-col justify-center gap-1.5 min-h-[44px]">
+                  <div className="flex items-start text-slate-700 dark:text-slate-300 font-medium gap-2">
+                    <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                    <span className="leading-5">{user.department || "-"}</span>
+                  </div>
+                  {user.division && (
+                    <div className="flex items-start text-slate-500 dark:text-purple-200/70 font-medium gap-2 ml-6 text-sm">
+                      <span className="leading-5">{user.division}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
