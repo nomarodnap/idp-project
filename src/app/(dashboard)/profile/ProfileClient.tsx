@@ -123,10 +123,18 @@ export default function ProfileClient({ user }: { user: any }) {
               </div>
 
               <div className="space-y-2 sm:col-span-2">
-                <label className="text-sm font-bold text-slate-700 dark:text-purple-200">สังกัด</label>
+                <label className="text-sm font-bold text-slate-700 dark:text-purple-200">กอง / สำนัก (Department)</label>
                 <div className="h-11 px-4 bg-slate-50 dark:bg-[#1a0b2e] border border-slate-200 dark:border-purple-900/50 rounded-xl flex items-center text-slate-700 dark:text-slate-300 font-medium gap-2">
                   <MapPin className="w-4 h-4 text-slate-400" />
-                  {user.department} {user.division ? ` / ${user.division}` : ''}
+                  {user.department || "-"}
+                </div>
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <label className="text-sm font-bold text-slate-700 dark:text-purple-200">กลุ่ม / ฝ่าย (Division)</label>
+                <div className="h-11 px-4 bg-slate-50 dark:bg-[#1a0b2e] border border-slate-200 dark:border-purple-900/50 rounded-xl flex items-center text-slate-700 dark:text-slate-300 font-medium gap-2">
+                  <MapPin className="w-4 h-4 text-slate-400" />
+                  {user.division || "-"}
                 </div>
               </div>
             </div>
