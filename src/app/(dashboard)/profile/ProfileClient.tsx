@@ -3,6 +3,8 @@
 import { useUser } from "@/components/UserProvider";
 import { User, Mail, Briefcase, Camera, Check, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { updateAvatar } from "@/actions/user";
+import { useTransition } from "react";
 
 const STYLES = [
   "avataaars", "big-smile", "fun-emoji", "bottts", 
@@ -31,6 +33,19 @@ const AVATAR_OPTIONS = Array.from({ length: 300 }).map((_, i) => {
 
 export default function ProfileClient({ user }: { user: any }) {
   const { avatarUrl, setAvatarUrl } = useUser();
+  const [isPending, startTransition] = useTransition();
+
+  const handleAvatarSelect = (url: string) => {
+    // Optimistic update
+    setAvatarUrl(url);
+    
+    // Save to DB in background
+    startTransition(() => {
+      updateAvatar(url).catch(err => {
+        console.error("Failed to update avatar", err);
+      });
+    });
+  };
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -61,7 +76,7 @@ export default function ProfileClient({ user }: { user: any }) {
 
             <div className="w-full">
               <p className="text-sm font-bold text-slate-700 dark:text-purple-200 mb-3 text-left flex items-center gap-2">
-                เลือกรูปโปรไฟล์ (อวาตาร์)
+                เลือกรูปโปรไฟล์ (อวาตาร์) {isPending && <span className="text-xs font-normal text-amber-500 animate-pulse">กำลังบันทึก...</span>}
               </p>
               
               <div className="h-80 overflow-y-auto pr-2 custom-scrollbar">
@@ -71,7 +86,7 @@ export default function ProfileClient({ user }: { user: any }) {
                     return (
                       <button
                         key={idx}
-                        onClick={() => setAvatarUrl(url)}
+                        onClick={() => handleAvatarSelect(url)}
                         className={cn(
                           "relative aspect-square rounded-2xl overflow-hidden transition-all duration-300 border-2",
                           isSelected 
