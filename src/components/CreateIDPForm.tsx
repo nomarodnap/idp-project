@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useUser } from "@/components/UserProvider";
 
 const formSchema = z.object({
   devCategory: z.string().min(1, "กรุณาเลือกความรู้ / ทักษะ / สมรรถนะที่ต้องการพัฒนา"),
@@ -79,8 +80,22 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function CreateIDPForm() {
   const router = useRouter();
+  const { user } = useUser();
   const [step, setStep] = useState(1);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  const availableCategories = Object.keys(categoryOptions).filter((cat) => {
+    if (user?.employeeType === "ข้าราชการพลเรือนสามัญ") {
+      return cat !== "สมรรถนะหลัก";
+    }
+    if (user?.employeeType === "พนักงานราชการทั่วไป") {
+      return cat === "สมรรถนะที่จำเป็น";
+    }
+    if (user?.employeeType === "ลูกจ้างประจำ") {
+      return cat === "สมรรถนะหลัก";
+    }
+    return true; // Default
+  });
 
   const {
     control,
@@ -194,7 +209,7 @@ export function CreateIDPForm() {
                       <SelectValue placeholder="-- เลือกระดับความต้องการพัฒนา --" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.keys(categoryOptions).map((cat) => (
+                      {availableCategories.map((cat) => (
                         <SelectItem key={cat} value={cat}>
                           {cat}
                         </SelectItem>
