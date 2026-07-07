@@ -15,6 +15,13 @@
       "when": 1783392218171,
       "tag": "0001_small_leper_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783393274675,
+      "tag": "0002_vengeful_kulan_gath",
+      "breakpoints": true
     }
   ]
 }

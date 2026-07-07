@@ -1,7 +1,15 @@
-import { pgTable, uuid, varchar, timestamp, text, integer, date } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, timestamp, text, integer, date, boolean } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(), // UUID (Primary Key)
+  
+  // Better Auth required fields
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("emailVerified").notNull().default(false),
+  image: text("image"),
+
+  // DPIS fields
   citizenId: varchar("citizen_id", { length: 13 }).notNull().unique(), // รหัสบัตรประจำตัวประชาชน
   title: varchar("title", { length: 50 }), // คำนำหน้าชื่อ
   firstName: varchar("first_name", { length: 100 }).notNull(), // ชื่อจริง
@@ -12,10 +20,49 @@ export const users = pgTable("users", {
   department: varchar("department", { length: 255 }), // กอง/สำนักงาน
   division: varchar("division", { length: 255 }), // กลุ่ม/ฝ่าย
   avatarUrl: varchar("avatar_url", { length: 255 }), // ลิงก์รูปภาพ
+  
   createdAt: timestamp("created_at").defaultNow().notNull(), // created_at
   updatedAt: timestamp("updated_at").defaultNow().notNull(), // updated_at
 });
 
+// Better Auth Tables
+export const session = pgTable("session", {
+  id: text("id").primaryKey(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("createdAt").notNull(),
+  updatedAt: timestamp("updatedAt").notNull(),
+  ipAddress: text("ipAddress"),
+  userAgent: text("userAgent"),
+  userId: uuid("userId").notNull().references(() => users.id, { onDelete: 'cascade' })
+});
+
+export const account = pgTable("account", {
+  id: text("id").primaryKey(),
+  accountId: text("accountId").notNull(),
+  providerId: text("providerId").notNull(),
+  userId: uuid("userId").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  accessToken: text("accessToken"),
+  refreshToken: text("refreshToken"),
+  idToken: text("idToken"),
+  accessTokenExpiresAt: timestamp("accessTokenExpiresAt"),
+  refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt"),
+  scope: text("scope"),
+  password: text("password"),
+  createdAt: timestamp("createdAt").notNull(),
+  updatedAt: timestamp("updatedAt").notNull()
+});
+
+export const verification = pgTable("verification", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt"),
+  updatedAt: timestamp("updatedAt")
+});
+
+// IDP Tables
 export const idpPlans = pgTable("idp_plans", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),

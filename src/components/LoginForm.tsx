@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { useState } from "react";
+import { loginWithDPIS } from "@/actions/auth";
+
 const loginSchema = z.object({
   citizenId: z.string().length(13, {
     message: "รหัสบัตรประชาชนต้องมี 13 หลัก",
@@ -25,6 +28,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const router = useRouter();
+  const [errorMsg, setErrorMsg] = useState("");
 
   const {
     register,
@@ -38,12 +42,22 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(data: LoginValues) {
-    console.log("Login Data:", data);
-    // Simulate login and redirect to dashboard
-    setTimeout(() => {
-      router.push("/");
-    }, 1000);
+  async function onSubmit(data: LoginValues) {
+    setErrorMsg("");
+    const formData = new FormData();
+    formData.append("citizenId", data.citizenId);
+    formData.append("password", data.password);
+
+    try {
+      const result = await loginWithDPIS(formData);
+      if (result.error) {
+        setErrorMsg(result.error);
+      } else if (result.success) {
+        router.push("/");
+      }
+    } catch (err) {
+      setErrorMsg("เกิดข้อผิดพลาดในการเชื่อมต่อระบบ");
+    }
   }
 
   return (
@@ -86,6 +100,12 @@ export function LoginForm() {
           <p className="text-sm font-medium text-red-500 dark:text-red-400 mt-1">{errors.password.message}</p>
         )}
       </div>
+
+      {errorMsg && (
+        <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400 text-sm font-medium text-center animate-in fade-in zoom-in duration-300">
+          {errorMsg}
+        </div>
+      )}
 
       <Button 
         type="submit" 

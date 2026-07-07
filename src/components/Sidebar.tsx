@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, User, FileEdit, History, BookOpen, Anchor, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, User, FileEdit, History, BookOpen, Anchor, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
@@ -78,6 +78,25 @@ export function Sidebar() {
             );
           })}
         </nav>
+      </div>
+
+      {/* Logout Button */}
+      <div className="px-3 pb-4">
+        <button
+          onClick={async () => {
+            const { logout } = await import("@/actions/auth");
+            await logout();
+            window.location.href = "/login";
+          }}
+          className={cn(
+            "flex items-center w-full rounded-xl transition-all duration-300 group relative text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20",
+            isCollapsed ? "justify-center py-3 px-0" : "gap-3 px-4 py-3 font-medium"
+          )}
+          title={isCollapsed ? "ออกจากระบบ" : undefined}
+        >
+          <LogOut className="w-5 h-5 shrink-0 transition-transform duration-300 group-hover:scale-110" />
+          {!isCollapsed && <span>ออกจากระบบ</span>}
+        </button>
       </div>
 
       {/* System Status */}
