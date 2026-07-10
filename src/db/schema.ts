@@ -78,6 +78,7 @@ export const idpPlans = pgTable("idp_plans", {
   dev20: text("dev_20").notNull(),
   dev10: text("dev_10").notNull(),
   supervisorName: varchar("supervisor_name", { length: 255 }).notNull(),
+  supervisorPosition: varchar("supervisor_position", { length: 255 }).notNull().default(''),
   status: varchar("status", { length: 50 }).notNull().default('Draft'), // Draft, Pending, Approved, Rejected, Completed
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

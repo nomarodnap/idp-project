@@ -26,6 +26,7 @@ export async function getIDPPlans(statusFilter?: string) {
     dev20: idpPlans.dev20,
     dev10: idpPlans.dev10,
     supervisorName: idpPlans.supervisorName,
+    supervisorPosition: idpPlans.supervisorPosition,
     status: idpPlans.status,
     createdAt: idpPlans.createdAt,
     updatedAt: idpPlans.updatedAt,
@@ -87,6 +88,7 @@ export async function createIDPPlan(data: any) {
       dev20: data.dev20,
       dev10: data.dev10,
       supervisorName: data.supervisorName,
+      supervisorPosition: data.supervisorPosition,
       status: "Pending", // รออนุมัติ
     }).returning();
 
@@ -141,6 +143,7 @@ export async function updateIDPPlan(id: string, data: any) {
       dev20: data.dev20,
       dev10: data.dev10,
       supervisorName: data.supervisorName,
+      supervisorPosition: data.supervisorPosition,
       status: "Pending", // Reset status back to pending after edit
       updatedAt: new Date(),
     }).where(eq(idpPlans.id, id));

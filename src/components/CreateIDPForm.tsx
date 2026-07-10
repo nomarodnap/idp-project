@@ -6,7 +6,7 @@ import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { createIDPPlan, updateIDPPlan } from "@/actions/idp";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, Info, ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,19 @@ const formSchema = z.object({
   dev70: z.string().min(1, "กรุณาเลือกการเรียนรู้จากประสบการณ์ (70%)"),
   dev20: z.string().min(1, "กรุณาเลือกการเรียนรู้จากผู้อื่น (20%)"),
   dev10: z.string().min(1, "กรุณาเลือกการเรียนรู้จากการฝึกอบรม (10%)"),
-  supervisorName: z.string().min(1, "กรุณากรอกชื่อ-สกุล ตำแหน่งผู้บังคับบัญชา"),
+  supervisorName: z.string().min(1, "กรุณากรอกชื่อ-สกุลผู้บังคับบัญชา"),
+  supervisorPosition: z.string().min(1, "กรุณากรอกตำแหน่งผู้บังคับบัญชา"),
+});
+
+const getFormSchema = (employeeType?: string) => z.object({
+  devCategory: z.string().min(1, (employeeType === "พนักงานราชการทั่วไป" || employeeType === "ลูกจ้างประจำ") ? "กรุณาเลือกสมรรถนะที่ต้องการพัฒนา" : "กรุณาเลือกความรู้/ทักษะ/สมรรถนะที่ต้องการพัฒนา"),
+  devTopic: z.string().min(1, "กรุณาเลือกหัวข้อที่ต้องการพัฒนา"),
+  courseTitle: z.string().min(1, "กรุณากรอกหัวข้อหลักสูตรที่ต้องการ"),
+  dev70: z.string().min(1, "กรุณาเลือกการเรียนรู้จากประสบการณ์ (70%)"),
+  dev20: z.string().min(1, "กรุณาเลือกการเรียนรู้จากผู้อื่น (20%)"),
+  dev10: z.string().min(1, "กรุณาเลือกการเรียนรู้จากการฝึกอบรม (10%)"),
+  supervisorName: z.string().min(1, "กรุณากรอกชื่อ-สกุลผู้บังคับบัญชา"),
+  supervisorPosition: z.string().min(1, "กรุณากรอกตำแหน่งผู้บังคับบัญชา"),
 });
 
 const categoryOptions = {
@@ -116,7 +128,7 @@ export function CreateIDPForm({ initialData, planId }: { initialData?: any, plan
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema) as any,
+    resolver: zodResolver(getFormSchema(user?.employeeType)) as any,
     defaultValues: {
       devCategory: initialData?.devCategory || "",
       devTopic: initialData?.devTopic || "",
@@ -125,6 +137,7 @@ export function CreateIDPForm({ initialData, planId }: { initialData?: any, plan
       dev20: initialData?.dev20 || "",
       dev10: initialData?.dev10 || "",
       supervisorName: initialData?.supervisorName || "",
+      supervisorPosition: initialData?.supervisorPosition || "",
     },
   });
   const watchCategory = useWatch({
@@ -207,12 +220,48 @@ export function CreateIDPForm({ initialData, planId }: { initialData?: any, plan
           <div className="flex flex-col space-y-8">
             {/* หมวดหมู่หลัก */}
             <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
+              {/* รายละเอียดหมวดหมู่สมรรถนะ */}
+              {user?.employeeType === "ข้าราชการพลเรือนสามัญ" && (
+                <details className="mb-6 group bg-purple-50/50 dark:bg-purple-900/20 rounded-2xl border border-purple-100 dark:border-purple-800/50 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <summary className="flex items-center justify-between p-5 sm:p-6 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800/80">
+                        <Info className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                      </div>
+                      <h3 className="font-bold text-[#2e1065] dark:text-purple-200">
+                        ดูรายละเอียดหมวดหมู่สมรรถนะ
+                      </h3>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-purple-600 dark:text-purple-400 group-open:rotate-180 transition-transform duration-300" />
+                  </summary>
+                  <div className="px-5 pb-5 sm:px-6 sm:pb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 border-t border-purple-100 dark:border-purple-800/50 pt-5">
+                    {availableCategories.map(cat => (
+                      <div key={cat} className="bg-white dark:bg-[#150a29] p-4 rounded-xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all group">
+                        <h4 className="font-bold text-purple-700 dark:text-purple-300 text-sm mb-3 pb-2 border-b border-purple-50 dark:border-purple-800/30 group-hover:border-purple-200 dark:group-hover:border-purple-700 transition-colors">
+                          {cat}
+                        </h4>
+                        <ul className="space-y-2">
+                          {categoryOptions[cat as keyof typeof categoryOptions].map((item, idx) => (
+                            <li key={idx} className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2 leading-relaxed">
+                              <div className="w-1.5 h-1.5 rounded-full bg-purple-200 dark:bg-purple-800 mt-1.5 shrink-0 group-hover:bg-purple-400 dark:group-hover:bg-purple-500 transition-colors" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                    </div>
+                  </div>
+                </details>
+              )}
+
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Label
                   className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
                   htmlFor="devCategory"
                 >
-                  ความรู้/ทักษะ/สมรรถนะที่ต้องการพัฒนา
+                  {(user?.employeeType === "พนักงานราชการทั่วไป" || user?.employeeType === "ลูกจ้างประจำ") ? "สมรรถนะที่ต้องการพัฒนา" : "ความรู้/ทักษะ/สมรรถนะที่ต้องการพัฒนา"}
                 </Label>
                 {errors.devCategory && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
@@ -585,7 +634,7 @@ export function CreateIDPForm({ initialData, planId }: { initialData?: any, plan
                   className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
                   htmlFor="supervisorName"
                 >
-                  ชื่อ-สกุล ตำแหน่งผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ
+                  ชื่อ-สกุลผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ
                 </Label>
                 {hasSubmitted && errors.supervisorName && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
@@ -599,8 +648,35 @@ export function CreateIDPForm({ initialData, planId }: { initialData?: any, plan
                 render={({ field }) => (
                   <Input
                     {...field}
-                    placeholder="กรุณากรอกชื่อ-สกุล และตำแหน่งผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ"
+                    placeholder="กรุณากรอกชื่อ-สกุลผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ"
                     className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all md:text-base text-base ${hasSubmitted && errors.supervisorName ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
+                  />
+                )}
+              />
+            </div>
+
+            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label
+                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
+                  htmlFor="supervisorPosition"
+                >
+                  ตำแหน่งผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ
+                </Label>
+                {hasSubmitted && errors.supervisorPosition && (
+                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+                    {errors.supervisorPosition.message}
+                  </span>
+                )}
+              </div>
+              <Controller
+                control={control}
+                name="supervisorPosition"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    placeholder="กรุณากรอกตำแหน่งผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ"
+                    className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all md:text-base text-base ${hasSubmitted && errors.supervisorPosition ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
                   />
                 )}
               />
