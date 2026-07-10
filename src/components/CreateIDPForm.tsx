@@ -32,7 +32,7 @@ const formSchema = z.object({
   supervisorPosition: z.string().min(1, "กรุณากรอกตำแหน่งผู้บังคับบัญชา"),
 });
 
-const getFormSchema = (employeeType?: string) => z.object({
+const getFormSchema = (employeeType?: string | null) => z.object({
   devCategory: z.string().min(1, (employeeType === "พนักงานราชการทั่วไป" || employeeType === "ลูกจ้างประจำ") ? "กรุณาเลือกสมรรถนะที่ต้องการพัฒนา" : "กรุณาเลือกความรู้/ทักษะ/สมรรถนะที่ต้องการพัฒนา"),
   devTopic: z.string().min(1, "กรุณาเลือกหัวข้อที่ต้องการพัฒนา"),
   courseTitle: z.string().min(1, "กรุณากรอกหัวข้อหลักสูตรที่ต้องการ"),
