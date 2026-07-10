@@ -5,6 +5,8 @@ import { z } from "zod";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { createIDPPlan, updateIDPPlan } from "@/actions/idp";
+import { Loader2, CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,7 +22,7 @@ import {
 import { useUser } from "@/components/UserProvider";
 
 const formSchema = z.object({
-  devCategory: z.string().min(1, "กรุณาเลือกความรู้ / ทักษะ / สมรรถนะที่ต้องการพัฒนา"),
+  devCategory: z.string().min(1, "กรุณาเลือกความรู้/ทักษะ/สมรรถนะที่ต้องการพัฒนา"),
   devTopic: z.string().min(1, "กรุณาเลือกหัวข้อที่ต้องการพัฒนา"),
   courseTitle: z.string().min(1, "กรุณากรอกหัวข้อหลักสูตรที่ต้องการ"),
   dev70: z.string().min(1, "กรุณาเลือกการเรียนรู้จากประสบการณ์ (70%)"),
@@ -49,7 +51,7 @@ const categoryOptions = {
   "สมรรถนะทางการบริหาร": [
     "การสื่อสารและการสร้างความผูกพันธ์",
     "การเรียนรู้และพัฒนา",
-    "การปฏิรูป / ปรับเปลี่ยนราชการสู่อนาคต",
+    "การปฏิรูป/ปรับเปลี่ยนราชการสู่อนาคต",
     "การรักษาวินัย คุณธรรม และจริยธรรม"
   ],
   "สมรรถนะเฉพาะตามลักษณะงานที่ปฏิบัติ": [
@@ -78,11 +80,12 @@ const categoryOptions = {
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function CreateIDPForm() {
+export function CreateIDPForm({ initialData, planId }: { initialData?: any, planId?: string } = {}) {
   const router = useRouter();
   const { user } = useUser();
   const [step, setStep] = useState(1);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const availableCategories = Object.keys(categoryOptions).filter((cat) => {
     if (user?.employeeType === "ข้าราชการพลเรือนสามัญ") {
@@ -97,6 +100,13 @@ export function CreateIDPForm() {
     return true; // Default
   });
 
+  const getCategoryLabel = (cat: string) => {
+    if (user?.employeeType === "พนักงานราชการทั่วไป" && cat === "สมรรถนะที่จำเป็น") {
+      return "สมรรถนะหลัก";
+    }
+    return cat;
+  };
+
   const {
     control,
     handleSubmit,
@@ -107,13 +117,13 @@ export function CreateIDPForm() {
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
-      devCategory: "",
-      devTopic: "",
-      courseTitle: "",
-      dev70: "",
-      dev20: "",
-      dev10: "",
-      supervisorName: "",
+      devCategory: initialData?.devCategory || "",
+      devTopic: initialData?.devTopic || "",
+      courseTitle: initialData?.courseTitle || "",
+      dev70: initialData?.dev70 || "",
+      dev20: initialData?.dev20 || "",
+      dev10: initialData?.dev10 || "",
+      supervisorName: initialData?.supervisorName || "",
     },
   });
   const watchCategory = useWatch({
@@ -127,9 +137,26 @@ export function CreateIDPForm() {
   });
 
 
-  function onSubmit(data: FormValues) {
-    console.log("Submitted Data:", data);
-    // TODO: Proceed to next step based on user requirements
+  async function onSubmit(data: FormValues) {
+    setIsSubmitting(true);
+    try {
+      let result;
+      if (planId) {
+        result = await updateIDPPlan(planId, data);
+      } else {
+        result = await createIDPPlan(data);
+      }
+
+      if (result.error) {
+        alert("Error: " + result.error);
+        setIsSubmitting(false);
+      } else {
+        router.push("/idp"); // redirect to idp list
+      }
+    } catch (error) {
+      console.error(error);
+      setIsSubmitting(false);
+    }
   }
 
   const handleNextToStep2 = async () => {
@@ -184,7 +211,7 @@ export function CreateIDPForm() {
                   className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
                   htmlFor="devCategory"
                 >
-                  ความรู้ / ทักษะ / สมรรถนะที่ต้องการพัฒนา
+                  ความรู้/ทักษะ/สมรรถนะที่ต้องการพัฒนา
                 </Label>
                 {errors.devCategory && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
@@ -211,7 +238,7 @@ export function CreateIDPForm() {
                     <SelectContent>
                       {availableCategories.map((cat) => (
                         <SelectItem key={cat} value={cat}>
-                          {cat}
+                          {getCategoryLabel(cat)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -228,7 +255,7 @@ export function CreateIDPForm() {
                     className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
                     htmlFor="devTopic"
                   >
-                    {watchCategory}
+                    {getCategoryLabel(watchCategory)}
                   </Label>
                   {errors.devTopic && (
                     <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
@@ -244,7 +271,7 @@ export function CreateIDPForm() {
                       <SelectTrigger
                         className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.devTopic ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
                       >
-                        <SelectValue placeholder={`-- เลือก${watchCategory} --`} />
+                        <SelectValue placeholder={`-- เลือก${getCategoryLabel(watchCategory)} --`} />
                       </SelectTrigger>
                       <SelectContent>
                         {categoryOptions[watchCategory as keyof typeof categoryOptions]?.map((topic) => (
@@ -315,7 +342,7 @@ export function CreateIDPForm() {
                   className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
                   htmlFor="dev70"
                 >
-                  70% การเรียนรู้จากประสบการณ์ (Experiential Learning)
+                  70% การเรียนรู้จากประสบการณ์
                 </Label>
                 {hasSubmitted && errors.dev70 && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
@@ -324,11 +351,7 @@ export function CreateIDPForm() {
                 )}
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                เกิดจากประสบการณ์ในการทำงาน การทดลองปฏิบัติงาน
-                การได้รับการมอบหมายงานให้รับผิดชอบ
-                การติดตามและสังเกตการณ์ทำงานของผู้ร่วมงาน
-                เพื่อให้เกิดพัฒนาความรู้ ความคิด และทักษะในการทำงาน
-                รู้จักการแก้ไขปัญหา เพื่อให้งานบรรลุเป้าหมาย
+                การเรียนรู้จากการลงมือปฏิบัติจริง การได้รับมอบหมายงาน การติดตามสังเกตงาน หรือศึกษาด้วยตนเอง
               </p>
               <Controller
                 control={control}
@@ -341,7 +364,7 @@ export function CreateIDPForm() {
                   >
                     <div className="flex items-start space-x-3">
                       <RadioGroupItem
-                        value="การลงมือปฏิบัติ (On the-job Training)"
+                        value="ลงมือปฏิบัติ"
                         id="dev70-1"
                         className="h-5 w-5 mt-0.5"
                       />
@@ -349,12 +372,12 @@ export function CreateIDPForm() {
                         htmlFor="dev70-1"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        การลงมือปฏิบัติ (On the-job Training)
+                        ลงมือปฏิบัติ
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
                       <RadioGroupItem
-                        value="การได้รับมอบหมายงาน (Assignment)"
+                        value="ได้รับมอบหมายงาน"
                         id="dev70-2"
                         className="h-5 w-5 mt-0.5"
                       />
@@ -362,12 +385,12 @@ export function CreateIDPForm() {
                         htmlFor="dev70-2"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        การได้รับมอบหมายงาน (Assignment)
+                        ได้รับมอบหมายงาน
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
                       <RadioGroupItem
-                        value="การเรียนรู้ด้วยตนเองโดยการศึกษาจากเอกสาร คู่มือ แนวทางการปฏิบัติ YouTube TikTok ฯลฯ (Self-learning)"
+                        value="เรียนรู้ด้วยตนเอง"
                         id="dev70-3"
                         className="h-5 w-5 mt-0.5"
                       />
@@ -375,13 +398,12 @@ export function CreateIDPForm() {
                         htmlFor="dev70-3"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300 leading-relaxed"
                       >
-                        การเรียนรู้ด้วยตนเองโดยการศึกษาจากเอกสาร คู่มือ
-                        แนวทางการปฏิบัติ YouTube TikTok ฯลฯ (Self-learning)
+                        เรียนรู้ด้วยตนเอง
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
                       <RadioGroupItem
-                        value="การติดตาม / สังเกต (Job Shadowing)"
+                        value="ติดตามสังเกตงาน"
                         id="dev70-4"
                         className="h-5 w-5 mt-0.5"
                       />
@@ -389,7 +411,7 @@ export function CreateIDPForm() {
                         htmlFor="dev70-4"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        การติดตาม / สังเกต (Job Shadowing)
+                        ติดตามสังเกตงาน
                       </Label>
                     </div>
                   </RadioGroup>
@@ -404,7 +426,7 @@ export function CreateIDPForm() {
                   className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
                   htmlFor="dev20"
                 >
-                  20% การเรียนรู้จากผู้อื่น (Social Learning)
+                  20% การเรียนรู้จากผู้อื่น
                 </Label>
                 {hasSubmitted && errors.dev20 && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
@@ -413,8 +435,7 @@ export function CreateIDPForm() {
                 )}
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                เกิดจากการให้คำปรึกษาแนะนำ การสอนงาน และข้อมูลย้อนกลับ
-                จากผู้บังคับบัญชา เพื่อนร่วมงาน และบุคคลอื่น ๆ ที่เกี่ยวข้อง
+                การเรียนรู้ผ่านการพูดคุย การรับคำปรึกษา แนะนำ หรือการสอนงานจากหัวหน้าและเพื่อนร่วมงาน
               </p>
               <Controller
                 control={control}
@@ -427,7 +448,7 @@ export function CreateIDPForm() {
                   >
                     <div className="flex items-start space-x-3">
                       <RadioGroupItem
-                        value="การให้คำปรึกษาแนะนำ (Consulting)"
+                        value="ปรึกษาแนะนำ"
                         id="dev20-1"
                         className="h-5 w-5 mt-0.5"
                       />
@@ -435,12 +456,12 @@ export function CreateIDPForm() {
                         htmlFor="dev20-1"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        การให้คำปรึกษาแนะนำ (Consulting)
+                        ปรึกษาแนะนำ
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
                       <RadioGroupItem
-                        value="การสอนงาน (Coaching)"
+                        value="สอนงาน"
                         id="dev20-2"
                         className="h-5 w-5 mt-0.5"
                       />
@@ -448,12 +469,12 @@ export function CreateIDPForm() {
                         htmlFor="dev20-2"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        การสอนงาน (Coaching)
+                        สอนงาน
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
                       <RadioGroupItem
-                        value="การให้ข้อมูลป้อนกลับ (Feedback)"
+                        value="รับข้อมูลป้อนกลับ"
                         id="dev20-3"
                         className="h-5 w-5 mt-0.5"
                       />
@@ -461,7 +482,7 @@ export function CreateIDPForm() {
                         htmlFor="dev20-3"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        การให้ข้อมูลป้อนกลับ (Feedback)
+                        รับข้อมูลป้อนกลับ
                       </Label>
                     </div>
                   </RadioGroup>
@@ -476,7 +497,7 @@ export function CreateIDPForm() {
                   className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
                   htmlFor="dev10"
                 >
-                  10% การเรียนรู้จากการฝึกอบรม (Formal Learning)
+                  10% การเรียนรู้จากการฝึกอบรม
                 </Label>
                 {hasSubmitted && errors.dev10 && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
@@ -485,8 +506,7 @@ export function CreateIDPForm() {
                 )}
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                ได้มาจากการเข้าฝึกอบรม การประชุม / สัมมนาอย่างเป็นทางการ
-                และไม่เป็นทางการ ผ่านช่องทางการเรียนรู้และสื่อต่าง ๆ
+                การเรียนรู้ผ่านการฝึกอบรม สัมมนา ทั้งในรูปแบบทางการและไม่เป็นทางการ
               </p>
               <Controller
                 control={control}
@@ -499,7 +519,7 @@ export function CreateIDPForm() {
                   >
                     <div className="flex items-start space-x-3">
                       <RadioGroupItem
-                        value="การอบรมในรูปแบบการเรียนผ่านระบบ e-learning การอบรมในห้องเรียนทั้งในรูปแบบ Onsite Online และ ผสมผสาน (Hybrid) (Training) ฯลฯ"
+                        value="ฝึกอบรม/เรียนรู้ผ่านสื่อ"
                         id="dev10-1"
                         className="h-5 w-5 mt-0.5"
                       />
@@ -507,14 +527,12 @@ export function CreateIDPForm() {
                         htmlFor="dev10-1"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300 leading-relaxed"
                       >
-                        การอบรมในรูปแบบการเรียนผ่านระบบ e-learning
-                        การอบรมในห้องเรียนทั้งในรูปแบบ Onsite Online และ ผสมผสาน
-                        (Hybrid) (Training) ฯลฯ
+                        ฝึกอบรม/เรียนรู้ผ่านสื่อ
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
                       <RadioGroupItem
-                        value="การประชุม / สัมมนา (Meeting / Seminar)"
+                        value="ประชุม/สัมมนา"
                         id="dev10-2"
                         className="h-5 w-5 mt-0.5"
                       />
@@ -522,12 +540,12 @@ export function CreateIDPForm() {
                         htmlFor="dev10-2"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        การประชุม / สัมมนา (Meeting / Seminar)
+                        ประชุม/สัมมนา
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
                       <RadioGroupItem
-                        value="การอบรม / ประชุม แบบไม่เป็นทางการ"
+                        value="อบรม/ประชุมแบบไม่เป็นทางการ"
                         id="dev10-3"
                         className="h-5 w-5 mt-0.5"
                       />
@@ -535,7 +553,7 @@ export function CreateIDPForm() {
                         htmlFor="dev10-3"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        การอบรม / ประชุม แบบไม่เป็นทางการ
+                        อบรม/ประชุมแบบไม่เป็นทางการ
                       </Label>
                     </div>
                   </RadioGroup>
@@ -555,7 +573,7 @@ export function CreateIDPForm() {
               <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-200 text-sm shrink-0">
                 3
               </span>
-              ข้อมูลผู้บังคับบัญชา
+              ข้อมูลผู้กำกับดูแลแผน IDP
             </h2>
           </div>
 
@@ -580,7 +598,7 @@ export function CreateIDPForm() {
                 render={({ field }) => (
                   <Input
                     {...field}
-                    placeholder="กรุณากรอกชื่อ-สกุล และตำแหน่ง"
+                    placeholder="กรุณากรอกชื่อ-สกุล และตำแหน่งผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ"
                     className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all md:text-base text-base ${hasSubmitted && errors.supervisorName ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
                   />
                 )}
@@ -642,9 +660,17 @@ export function CreateIDPForm() {
             </Button>
             <Button
               type="submit"
+              disabled={isSubmitting}
               className="h-12 px-8 rounded-xl font-bold text-white shadow-[0_4px_14px_0_rgba(91,33,182,0.39)] transition-all hover:shadow-[0_6px_20px_rgba(91,33,182,0.23)] hover:-translate-y-0.5 bg-gradient-to-r from-[#4c1d95] to-[#2e1065] hover:from-[#5b21b6] hover:to-[#4c1d95] dark:from-[#5b21b6] dark:to-[#3b0764] dark:hover:from-[#6d28d9] dark:hover:to-[#4c1d95] border-none"
             >
-              บันทึก
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  กำลังบันทึก...
+                </>
+              ) : (
+                planId ? "บันทึกการแก้ไข" : "สร้างแผนพัฒนา"
+              )}
             </Button>
           </>
         )}

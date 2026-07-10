@@ -21,6 +21,9 @@ export const users = pgTable("users", {
   division: varchar("division", { length: 255 }), // กลุ่ม/ฝ่าย
   avatarUrl: text("avatar_url"), // ลิงก์รูปภาพ หรือ Base64 Image
   
+  systemRole: varchar("system_role", { length: 50 }).notNull().default('User'), // User, Supervisor, Admin
+  supervisorId: uuid("supervisor_id"), // อ้างอิง ID ของหัวหน้างาน
+
   createdAt: timestamp("created_at").defaultNow().notNull(), // created_at
   updatedAt: timestamp("updated_at").defaultNow().notNull(), // updated_at
 });
@@ -65,6 +68,7 @@ export const verification = pgTable("verification", {
 // IDP Tables
 export const idpPlans = pgTable("idp_plans", {
   id: uuid("id").primaryKey().defaultRandom(),
+  planCode: varchar("plan_code", { length: 50 }).notNull().unique().default(''), // IDP-YY-XXXXXX
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   fiscalYear: integer("fiscal_year").notNull(),
   devCategory: varchar("dev_category", { length: 255 }).notNull(),
@@ -96,5 +100,21 @@ export const idpApprovals = pgTable("idp_approvals", {
   approverId: uuid("approver_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   status: varchar("status", { length: 50 }).notNull(), // Approved, Rejected
   comment: text("comment"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const competencyCategories = pgTable("competency_categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  code: varchar("code", { length: 50 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  employeeType: varchar("employee_type", { length: 100 }), // null = all
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const trainingCourses = pgTable("training_courses", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: varchar("title", { length: 255 }).notNull(),
+  provider: varchar("provider", { length: 255 }),
+  duration: varchar("duration", { length: 100 }), // e.g. "12 ชม."
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

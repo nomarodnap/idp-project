@@ -8,6 +8,8 @@ You are an expert Senior Full-Stack Developer specializing in the modern React a
 - **Form & Validation:** Zod (with react-hook-form)
 - **Authentication:** Better-Auth
 - **Database & ORM:** PostgreSQL + Drizzle ORM
+- **Testing:** Vitest (Unit) + Playwright (E2E)
+- **File Storage:** Base64 Encoding directly in PostgreSQL (No external S3)
 
 ---
 
@@ -53,3 +55,15 @@ You are an expert Senior Full-Stack Developer specializing in the modern React a
 
 ### 9. Project Structure
 - **src/ Directory:** Strictly use the `src/` directory pattern (`src/app`, `src/components`, `src/lib`, etc.). Do not create or move application folders to the root level outside of `src/` unless they are standard configuration files.
+
+### 10. Automated Testing
+- **Unit/Integration Tests:** Use `Vitest` and `React Testing Library`. Place test files alongside their components (e.g. `button.test.tsx` next to `button.tsx`).
+- **End-to-End (E2E) Tests:** Use `Playwright`. Place all E2E specs in the root `/e2e` directory. E2E tests should be self-contained and run against the local dev server.
+
+### 11. File & Media Storage
+- **No Cloud Storage:** Do NOT implement AWS S3, Supabase Storage, or any external file hosting services.
+- **Base64 Encoding:** All user-uploaded media (such as Avatar images) MUST be aggressively resized and compressed on the **client-side** (browser) using Canvas API (e.g., WebP format, max 200x200px) and converted into a Base64 string.
+- **Database Storage:** Save the resulting Base64 string directly into PostgreSQL `text` columns. This ensures simple database migrations and portability without external storage dependencies.
+
+### 12. Displaying User Position
+- **Position Display Logic:** When displaying a user's position in the UI, always check their `employeeType`. If `employeeType === "ข้าราชการพลเรือนสามัญ"`, display both `position` and `level` (e.g., `position + level`). For any other employee type, display ONLY the `position`.

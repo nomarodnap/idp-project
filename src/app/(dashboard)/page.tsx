@@ -4,6 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Loader2, Clock, CheckCircle2, MoreHorizontal } from "lucide-react";
+import Link from "next/link";
+import { getIDPPlans } from "@/actions/idp";
+import { format } from "date-fns";
 
 const statCards = [
   { title: "แผนทั้งหมด", value: "12", icon: FileText, color: "text-blue-600", subtitle: "แผนพัฒนาตลอดปี" },
@@ -12,38 +15,23 @@ const statCards = [
   { title: "เสร็จสิ้น", value: "7", icon: CheckCircle2, color: "text-emerald-600", subtitle: "ผ่านเกณฑ์ 100%" },
 ];
 
-const recentPlans = [
-  {
-    id: 1,
-    name: "หลักสูตรการเพาะเลี้ยงสัตว์น้ำสมัยใหม่",
-    type: "การฝึกอบรม",
-    date: "10 ต.ค. 2569",
-    status: "อนุมัติแล้ว",
-  },
-  {
-    id: 2,
-    name: "การวิเคราะห์ข้อมูลทางสถิติสำหรับงานวิจัย",
-    type: "การเรียนรู้ด้วยตนเอง",
-    date: "15 พ.ย. 2569",
-    status: "รออนุมัติ",
-  },
-  {
-    id: 3,
-    name: "การใช้เทคโนโลยีภูมิสารสนเทศ (GIS)",
-    type: "การสัมมนา",
-    date: "20 ธ.ค. 2569",
-    status: "กำลังดำเนินการ",
-  },
-  {
-    id: 4,
-    name: "ความเป็นผู้นำและการบริหารทีมงาน",
-    type: "การฝึกอบรม",
-    date: "05 ก.ย. 2569",
-    status: "เสร็จสิ้น",
-  },
-];
 
-export default function DashboardPage() {
+
+export default async function DashboardPage() {
+  const plans = await getIDPPlans();
+  const topPlans = plans.slice(0, 4); // Show only recent 4 plans
+  
+  const allCount = plans.length;
+  const pendingCount = plans.filter(p => p.status === 'Pending' || p.status === 'รออนุมัติ').length;
+  const completedCount = plans.filter(p => p.status === 'Completed' || p.status === 'เสร็จสิ้น').length;
+  const inProgressCount = plans.filter(p => p.status === 'In Progress' || p.status === 'กำลังดำเนินการ').length;
+
+  const statCards = [
+    { title: "แผนทั้งหมด", value: allCount.toString(), icon: FileText, color: "text-blue-600", subtitle: "แผนพัฒนาตลอดปี" },
+    { title: "กำลังดำเนินการ", value: inProgressCount.toString(), icon: Loader2, color: "text-amber-500", subtitle: "อยู่ระหว่างศึกษา" },
+    { title: "รอการอนุมัติ", value: pendingCount.toString(), icon: Clock, color: "text-orange-500", subtitle: "รอการประเมินผล" },
+    { title: "เสร็จสิ้น", value: completedCount.toString(), icon: CheckCircle2, color: "text-emerald-600", subtitle: "ผ่านเกณฑ์ 100%" },
+  ];
   return (
     <div className="space-y-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Welcome Section */}
@@ -100,55 +88,83 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Data Table */}
-      <Card className="shadow-lg border-slate-100 dark:border-purple-900/50 rounded-3xl overflow-hidden bg-white dark:bg-[#1a0b2e]">
-        <CardHeader className="bg-slate-50 dark:bg-[#150926]/50 border-b border-slate-100 dark:border-purple-900/50 px-8 py-6">
-          <CardTitle className="text-xl font-bold text-[#2e1065] dark:text-purple-50 tracking-tight">แผนการพัฒนาล่าสุด</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-slate-50/50 dark:bg-purple-950/30">
-              <TableRow className="hover:bg-transparent border-slate-100 dark:border-purple-900/50">
-                <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 h-14 px-8">ชื่อหลักสูตร/แผนงาน</TableHead>
-                <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 hidden md:table-cell">รูปแบบการพัฒนา</TableHead>
-                <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 hidden sm:table-cell">วันที่</TableHead>
-                <TableHead className="font-bold text-[#2e1065] dark:text-purple-200">สถานะ</TableHead>
-                <TableHead className="text-right font-bold text-[#2e1065] dark:text-purple-200 px-8">จัดการ</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentPlans.map((plan) => (
-                <TableRow key={plan.id} className="hover:bg-purple-50/30 dark:hover:bg-purple-900/20 transition-colors border-slate-100 dark:border-purple-900/30 group">
-                  <TableCell className="font-bold text-slate-700 dark:text-purple-100 px-8 py-5">{plan.name}</TableCell>
-                  <TableCell className="hidden md:table-cell text-slate-500 dark:text-slate-400 font-medium">{plan.type}</TableCell>
-                  <TableCell className="hidden sm:table-cell text-slate-500 dark:text-slate-400 font-medium">{plan.date}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant="outline" 
-                      className={`font-bold px-3 py-1 rounded-full border shadow-sm
-                        ${plan.status === "อนุมัติแล้ว" ? "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800" : ""}
-                        ${plan.status === "รออนุมัติ" ? "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800" : ""}
-                        ${plan.status === "กำลังดำเนินการ" ? "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800" : ""}
-                        ${plan.status === "เสร็จสิ้น" ? "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700" : ""}
-                      `}
-                    >
-                      {plan.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right px-8">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" className="hidden sm:flex rounded-full border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/50 hover:text-purple-800 dark:hover:text-purple-100 font-bold transition-all shadow-sm group-hover:shadow">ดูรายละเอียด</Button>
-                      <Button variant="ghost" size="icon" className="sm:hidden rounded-full text-purple-600 dark:text-purple-400">
-                        <MoreHorizontal className="h-5 w-5" />
-                      </Button>
+      {/* Data Cards (Replacing Table) */}
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h2 className="text-2xl font-black text-[#2e1065] dark:text-purple-50 tracking-tight">แผนการพัฒนาล่าสุด</h2>
+          <Link href="/idp">
+            <Button variant="ghost" className="text-purple-600 dark:text-purple-400 font-bold hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-xl">ดูทั้งหมด</Button>
+          </Link>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-2">
+          {topPlans.length === 0 && (
+            <div className="col-span-2 text-center py-10 text-slate-500">
+              ยังไม่มีแผนการพัฒนา
+            </div>
+          )}
+          {topPlans.map((plan) => (
+            <Card key={plan.id} className="shadow-md hover:shadow-xl transition-all duration-300 border-slate-100 dark:border-purple-900/50 rounded-3xl bg-white dark:bg-[#1a0b2e] group hover:-translate-y-1 relative overflow-hidden flex flex-col">
+              <div className={`absolute top-0 left-0 w-full h-1.5 
+                ${plan.status === "อนุมัติแล้ว" ? "bg-emerald-500" : ""}
+                ${plan.status === "รออนุมัติ" ? "bg-amber-500" : ""}
+                ${plan.status === "กำลังดำเนินการ" ? "bg-blue-500" : ""}
+                ${plan.status === "เสร็จสิ้น" ? "bg-slate-400" : ""}
+              `} />
+              <CardContent className="p-6 sm:p-8 flex flex-col h-full flex-grow">
+                <div className="flex justify-between items-start gap-4 mb-4">
+                  <Badge 
+                    variant="outline" 
+                    className={`font-bold px-3 py-1 rounded-full border shadow-sm shrink-0
+                      ${plan.status === "Approved" || plan.status === "อนุมัติแล้ว" ? "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800" : ""}
+                      ${plan.status === "Pending" || plan.status === "รออนุมัติ" ? "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800" : ""}
+                      ${plan.status === "Completed" || plan.status === "เสร็จสิ้น" ? "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700" : ""}
+                      ${plan.status === "Draft" || plan.status === "แบบร่าง" ? "bg-slate-50 text-slate-500 border-slate-200" : ""}
+                    `}
+                  >
+                    {plan.status === "Pending" ? "รออนุมัติ" : plan.status === "Approved" ? "อนุมัติแล้ว" : plan.status === "Completed" ? "เสร็จสิ้น" : plan.status === "Draft" ? "แบบร่าง" : plan.status}
+                  </Badge>
+                  <div className="text-sm font-medium text-slate-400 dark:text-slate-500 flex items-center gap-1.5 shrink-0">
+                    <Clock className="w-4 h-4" />
+                    {plan.createdAt ? format(new Date(plan.createdAt), "dd/MM/yyyy") : "-"}
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <h3 className="text-xl font-bold text-[#2e1065] dark:text-purple-50 line-clamp-2 leading-snug group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+                    {plan.courseTitle}
+                  </h3>
+                  <div className="text-sm font-semibold text-purple-600 dark:text-purple-400 mt-2">
+                    {plan.planCode || "IDP-LEGACY"}
+                  </div>
+                  <div className="inline-flex mt-2">
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-purple-100/50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800/50">
+                      หมวดหมู่: {plan.devCategory}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-5 border-t border-slate-100 dark:border-purple-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-purple-900/50 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium text-slate-400 dark:text-slate-500">ผู้กำกับดูแลแผน</span>
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300 line-clamp-1">{plan.supervisorName}</span>
+                    </div>
+                  </div>
+                  <Link href={`/idp/${plan.id}`} className="w-full sm:w-auto">
+                    <Button variant="outline" size="sm" className="rounded-xl border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/50 font-bold transition-all shadow-sm w-full">
+                      ดูรายละเอียด
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

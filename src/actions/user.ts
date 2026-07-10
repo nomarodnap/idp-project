@@ -36,3 +36,18 @@ export async function updateAvatar(url: string) {
 
   return { success: true };
 }
+
+export async function getUsers() {
+  return await db.select().from(users).orderBy(users.firstName);
+}
+
+export async function updateUserRole(id: string, role: string) {
+  await db.update(users).set({ systemRole: role }).where(eq(users.id, id));
+  revalidatePath("/admin/users");
+}
+
+export async function updateUserSupervisor(id: string, supervisorId: string) {
+  await db.update(users).set({ supervisorId: supervisorId }).where(eq(users.id, id));
+  revalidatePath("/admin/users");
+}
+

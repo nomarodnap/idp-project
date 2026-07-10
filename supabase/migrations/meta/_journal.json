@@ -29,6 +29,27 @@
       "when": 1783410105808,
       "tag": "0003_alter_avatar_to_text",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783580508668,
+      "tag": "0004_tense_weapon_omega",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783585206161,
+      "tag": "0005_wandering_maelstrom",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783585437960,
+      "tag": "0006_busy_ezekiel_stane",
+      "breakpoints": true
     }
   ]
 }
