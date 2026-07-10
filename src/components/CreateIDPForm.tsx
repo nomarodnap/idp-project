@@ -67,7 +67,13 @@ const categoryOptions = {
     "ความคิดสร้างสรรค์",
     "การใส่ใจและพัฒนาผู้อื่น"
   ],
-  "สมรรถนะหลัก": [
+  "สมรรถนะพนักงานราชการทั่วไป": [
+    "การทำงานที่เป็นเลิศ",
+    "การยึดมั่นในความถูกต้องและมีจิตบริการ",
+    "การประสานความร่วมมือร่วมใจ",
+    "ความยืดหยุ่น คล่องตัว ริเริ่มสร้างสรรค์"
+  ],
+  "สมรรถนะลูกจ้างประจำ": [
     "ความสามารถ และความอุตสาหะในการปฏิบัติงาน",
     "การรักษาวินัย และปฏิบัติตนเหมาะสมกับการเป็นลูกจ้างประจำ",
     "ความรับผิดชอบ",
@@ -89,23 +95,18 @@ export function CreateIDPForm({ initialData, planId }: { initialData?: any, plan
 
   const availableCategories = Object.keys(categoryOptions).filter((cat) => {
     if (user?.employeeType === "ข้าราชการพลเรือนสามัญ") {
-      return cat !== "สมรรถนะหลัก";
+      return cat !== "สมรรถนะพนักงานราชการทั่วไป" && cat !== "สมรรถนะลูกจ้างประจำ";
     }
     if (user?.employeeType === "พนักงานราชการทั่วไป") {
-      return cat === "สมรรถนะที่จำเป็น";
+      return cat === "สมรรถนะพนักงานราชการทั่วไป";
     }
     if (user?.employeeType === "ลูกจ้างประจำ") {
-      return cat === "สมรรถนะหลัก";
+      return cat === "สมรรถนะลูกจ้างประจำ";
     }
     return true; // Default
   });
 
-  const getCategoryLabel = (cat: string) => {
-    if (user?.employeeType === "พนักงานราชการทั่วไป" && cat === "สมรรถนะที่จำเป็น") {
-      return "สมรรถนะหลัก";
-    }
-    return cat;
-  };
+
 
   const {
     control,
@@ -238,7 +239,7 @@ export function CreateIDPForm({ initialData, planId }: { initialData?: any, plan
                     <SelectContent>
                       {availableCategories.map((cat) => (
                         <SelectItem key={cat} value={cat}>
-                          {getCategoryLabel(cat)}
+                          {cat}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -255,7 +256,7 @@ export function CreateIDPForm({ initialData, planId }: { initialData?: any, plan
                     className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
                     htmlFor="devTopic"
                   >
-                    {getCategoryLabel(watchCategory)}
+                    {watchCategory}
                   </Label>
                   {errors.devTopic && (
                     <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
@@ -271,7 +272,7 @@ export function CreateIDPForm({ initialData, planId }: { initialData?: any, plan
                       <SelectTrigger
                         className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.devTopic ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
                       >
-                        <SelectValue placeholder={`-- เลือก${getCategoryLabel(watchCategory)} --`} />
+                        <SelectValue placeholder={`-- เลือก${watchCategory} --`} />
                       </SelectTrigger>
                       <SelectContent>
                         {categoryOptions[watchCategory as keyof typeof categoryOptions]?.map((topic) => (
