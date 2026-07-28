@@ -3,20 +3,32 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, User, FileEdit, History, BookOpen, Anchor, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, User, FileEdit, History, BookOpen, Anchor, ChevronLeft, ChevronRight, LogOut, Shield, Users, CheckSquare, Database, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUser } from "./UserProvider";
 
 const menuItems = [
   { name: "หน้าหลัก", icon: Home, href: "/" },
   { name: "ข้อมูลส่วนบุคคล", icon: User, href: "/profile" },
   { name: "จัดทำแผน IDP", icon: FileEdit, href: "/idp/create" },
-  { name: "ประวัติการพัฒนา", icon: History, href: "#" },
+  { name: "ประวัติการพัฒนา", icon: History, href: "/idp" },
+  { name: "ตรวจสอบแผนลูกทีม", icon: Users, href: "/team-approvals" },
   { name: "คู่มือการใช้งาน", icon: BookOpen, href: "#" },
 ];
 
-export function Sidebar() {
+const adminItems = [
+  { name: "แดชบอร์ด (Overview)", icon: Shield, href: "/admin", exact: true },
+  { name: "รายงานแผน IDP", icon: CheckSquare, href: "/admin/approvals", exact: false },
+  { name: "จัดการบุคลากร", icon: Users, href: "/admin/users", exact: false },
+  // { name: "จัดการข้อมูลพื้นฐาน", icon: Database, href: "/admin/master-data", exact: false }, // Hidden for now
+  { name: "ตั้งค่าระบบ (Phase)", icon: Settings, href: "/admin/settings", exact: false },
+];
+
+export function Sidebar({ currentPhase = 1 }: { currentPhase?: number }) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { user } = useUser();
+  const isAdmin = user?.systemRole === "Admin";
 
   return (
     <aside className={cn(
@@ -35,7 +47,7 @@ export function Sidebar() {
       <div className={cn("h-20 flex items-center border-b border-slate-100 dark:border-purple-900/50 relative overflow-hidden", isCollapsed ? "px-0 justify-center" : "px-6")}>
         {/* Subtle gradient accent */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 via-purple-600 to-amber-400" />
-        <div className={cn("flex items-center gap-3", isCollapsed ? "justify-center w-full px-0" : "")}>
+        <Link href="/" className={cn("flex items-center gap-3 hover:opacity-80 transition-opacity", isCollapsed ? "justify-center w-full px-0" : "")}>
           <div className="h-10 w-10 rounded-full bg-white dark:bg-white/10 shadow-md border border-amber-200/50 dark:border-amber-500/30 p-0.5 shrink-0 overflow-hidden relative group">
             <img src="/logo-fisheries.png" alt="กรมประมง" className="w-full h-full object-contain rounded-full transition-transform duration-500 group-hover:scale-110" />
           </div>
@@ -45,13 +57,15 @@ export function Sidebar() {
               <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest">กรมประมง</span>
             </div>
           )}
-        </div>
+        </Link>
       </div>
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-6 overflow-x-hidden">
         <nav className="space-y-1 px-3">
-          {menuItems.map((item) => {
+          {menuItems
+            .filter((item) => item.name !== "จัดทำแผน IDP" || currentPhase === 1)
+            .map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
@@ -78,6 +92,60 @@ export function Sidebar() {
             );
           })}
         </nav>
+
+        {/* Admin Navigation */}
+        {isAdmin && (
+          <div className="mt-6 px-3">
+            {!isCollapsed && <h3 className="px-4 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Management</h3>}
+            <nav className="space-y-1">
+              {adminItems.map((item) => {
+                const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center rounded-xl transition-all duration-300 group relative",
+                      isCollapsed ? "justify-center py-3 px-0" : "gap-3 px-4 py-3",
+                      isActive 
+                        ? "bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold shadow-sm" 
+                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-purple-900/20 hover:text-amber-600 dark:hover:text-amber-400 font-medium"
+                    )}
+                    title={isCollapsed ? item.name : undefined}
+                  >
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-amber-500 rounded-r-full" />
+                    )}
+                    <item.icon className={cn(
+                      "w-5 h-5 shrink-0 transition-transform duration-300 group-hover:scale-110",
+                      isActive ? "text-amber-500" : "text-slate-400 dark:text-slate-500 group-hover:text-amber-500 dark:group-hover:text-amber-400"
+                    )} />
+                    {!isCollapsed && <span>{item.name}</span>}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        )}
+      </div>
+
+      {/* Logout Button */}
+      <div className="px-3 pb-4">
+        <button
+          onClick={async () => {
+            const { logout } = await import("@/actions/auth");
+            await logout();
+            window.location.href = "/login";
+          }}
+          className={cn(
+            "flex items-center w-full rounded-xl transition-all duration-300 group relative text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20",
+            isCollapsed ? "justify-center py-3 px-0" : "gap-3 px-4 py-3 font-medium"
+          )}
+          title={isCollapsed ? "ออกจากระบบ" : undefined}
+        >
+          <LogOut className="w-5 h-5 shrink-0 transition-transform duration-300 group-hover:scale-110" />
+          {!isCollapsed && <span>ออกจากระบบ</span>}
+        </button>
       </div>
 
       {/* System Status */}

@@ -4,11 +4,14 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { User, Lock, ArrowRight } from "lucide-react";
+import { User, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+import { useState } from "react";
+import { loginWithDPIS } from "@/actions/auth";
 
 const loginSchema = z.object({
   citizenId: z.string().length(13, {
@@ -25,6 +28,8 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const router = useRouter();
+  const [errorMsg, setErrorMsg] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -38,12 +43,22 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(data: LoginValues) {
-    console.log("Login Data:", data);
-    // Simulate login and redirect to dashboard
-    setTimeout(() => {
-      router.push("/");
-    }, 1000);
+  async function onSubmit(data: LoginValues) {
+    setErrorMsg("");
+    const formData = new FormData();
+    formData.append("citizenId", data.citizenId);
+    formData.append("password", data.password);
+
+    try {
+      const result = await loginWithDPIS(formData);
+      if (result.error) {
+        setErrorMsg(result.error);
+      } else if (result.success) {
+        router.push("/");
+      }
+    } catch (err) {
+      setErrorMsg("เกิดข้อผิดพลาดในการเชื่อมต่อระบบ");
+    }
   }
 
   return (
@@ -76,16 +91,29 @@ export function LoginForm() {
           </div>
           <Input
             id="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="รหัสผ่านระบบ DPIS"
-            className={`pl-12 h-14 text-lg bg-slate-50 dark:bg-[#1a0b2e] border-slate-200 dark:border-purple-900/50 text-[#2e1065] dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus-visible:bg-white dark:focus-visible:bg-[#230f3f] focus-visible:ring-purple-500/30 focus-visible:border-purple-500 dark:focus-visible:border-purple-400 transition-all shadow-sm ${errors.password ? 'border-red-400 dark:border-red-500/50 focus-visible:ring-red-400/30' : ''}`}
+            className={`pl-12 pr-12 h-14 text-lg bg-slate-50 dark:bg-[#1a0b2e] border-slate-200 dark:border-purple-900/50 text-[#2e1065] dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus-visible:bg-white dark:focus-visible:bg-[#230f3f] focus-visible:ring-purple-500/30 focus-visible:border-purple-500 dark:focus-visible:border-purple-400 transition-all shadow-sm ${errors.password ? 'border-red-400 dark:border-red-500/50 focus-visible:ring-red-400/30' : ''}`}
             {...register("password")}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 focus:outline-none transition-colors"
+          >
+            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+          </button>
         </div>
         {errors.password && (
           <p className="text-sm font-medium text-red-500 dark:text-red-400 mt-1">{errors.password.message}</p>
         )}
       </div>
+
+      {errorMsg && (
+        <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400 text-sm font-medium text-center animate-in fade-in zoom-in duration-300">
+          {errorMsg}
+        </div>
+      )}
 
       <Button 
         type="submit" 

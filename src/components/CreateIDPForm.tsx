@@ -1,15 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { z } from "zod";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { th } from "date-fns/locale";
+import { useRouter } from "next/navigation";
+import { createIDPPlan, updateIDPPlan } from "@/actions/idp";
+import { Loader2, CheckCircle2, Info, ChevronDown } from "lucide-react";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -17,265 +19,795 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { useRouter } from "next/navigation";
+import { useUser } from "@/components/UserProvider";
 
 const formSchema = z.object({
-  competencyType: z.string({
-    message: "กรุณาเลือกสมรรถนะ",
-  }).min(1, "กรุณาเลือกสมรรถนะ"),
-  details: z.string().min(10, {
-    message: "กรุณาระบุรายละเอียดอย่างน้อย 10 ตัวอักษร",
-  }),
-  developmentMethod: z.string({
-    message: "กรุณาเลือกรูปแบบการพัฒนา",
-  }).min(1, "กรุณาเลือกรูปแบบการพัฒนา"),
-  dateRange: z
-    .object({
-      from: z.date(),
-      to: z.date().optional(),
-    })
-    .refine((data) => data.from, { message: "กรุณาเลือกช่วงเวลา" }),
-  budget: z.coerce.number().min(0, {
-    message: "งบประมาณต้องไม่ต่ำกว่า 0",
-  }),
+  devCategory: z.string().min(1, "กรุณาเลือกความรู้/ทักษะ/สมรรถนะที่ต้องการพัฒนา"),
+  devTopic: z.string().min(1, "กรุณาเลือกหัวข้อที่ต้องการพัฒนา"),
+  courseTitle: z.string().min(1, "กรุณากรอกหัวข้อหลักสูตรที่ต้องการ"),
+  dev70: z.string().min(1, "กรุณาเลือกการเรียนรู้จากประสบการณ์ (70%)"),
+  dev20: z.string().min(1, "กรุณาเลือกการเรียนรู้จากผู้อื่น (20%)"),
+  dev10: z.string().min(1, "กรุณาเลือกการเรียนรู้จากการฝึกอบรม (10%)"),
+  supervisorName: z.string().min(1, "กรุณากรอกชื่อ-สกุลผู้บังคับบัญชา"),
+  supervisorPosition: z.string().min(1, "กรุณากรอกตำแหน่งผู้บังคับบัญชา"),
 });
+
+const getFormSchema = (employeeType?: string | null) => z.object({
+  devCategory: z.string().min(1, (employeeType === "พนักงานราชการทั่วไป" || employeeType === "ลูกจ้างประจำ") ? "กรุณาเลือกสมรรถนะที่ต้องการพัฒนา" : "กรุณาเลือกความรู้/ทักษะ/สมรรถนะที่ต้องการพัฒนา"),
+  devTopic: z.string().min(1, "กรุณาเลือกหัวข้อที่ต้องการพัฒนา"),
+  courseTitle: z.string().min(1, "กรุณากรอกหัวข้อหลักสูตรที่ต้องการ"),
+  dev70: z.string().min(1, "กรุณาเลือกการเรียนรู้จากประสบการณ์ (70%)"),
+  dev20: z.string().min(1, "กรุณาเลือกการเรียนรู้จากผู้อื่น (20%)"),
+  dev10: z.string().min(1, "กรุณาเลือกการเรียนรู้จากการฝึกอบรม (10%)"),
+  supervisorName: z.string().min(1, "กรุณากรอกชื่อ-สกุลผู้บังคับบัญชา"),
+  supervisorPosition: z.string().min(1, "กรุณากรอกตำแหน่งผู้บังคับบัญชา"),
+});
+
+const categoryOptions = {
+  "ความรู้ความสามารถที่จำเป็นสำหรับการปฏิบัติงาน": [
+    "ความรู้ความสามารถที่ใช้ในการปฏิบัติงาน",
+    "ความรู้เรื่องกฏหมายและกฏระเบียบทางราชการ"
+  ],
+  "ทักษะ": [
+    "การใช้คอมพิวเตอร์",
+    "การใช้ภาษา",
+    "การคำนวณ",
+    "การจัดการข้อมูล"
+  ],
+  "สมรรถนะที่จำเป็น": [
+    "การทำงานที่เป็นเลิศ",
+    "การยึดมั่นในความถูกต้องและมีจิตบริการ",
+    "การประสานความร่วมมือร่วมใจ",
+    "ความยืดหยุ่น คล่องตัว ริเริ่มสร้างสรรค์"
+  ],
+  "สมรรถนะทางการบริหาร": [
+    "การสื่อสารและการสร้างความผูกพันธ์",
+    "การเรียนรู้และพัฒนา",
+    "การปฏิรูป/ปรับเปลี่ยนราชการสู่อนาคต",
+    "การรักษาวินัย คุณธรรม และจริยธรรม"
+  ],
+  "สมรรถนะเฉพาะตามลักษณะงานที่ปฏิบัติ": [
+    "การคิดวิเคราะห์",
+    "การมองภาพองค์รวม",
+    "การแสดงความรับผิดชอบตามหน้าที่",
+    "การสืบเสาะหาข้อมูล",
+    "การตรวจสอบความถูกต้องตามกระบวนงาน",
+    "ความเข้าใจองค์กรและระบบราชการ",
+    "การดำเนินการเชิงรุก",
+    "ความมั่นใจในตนเอง",
+    "สุนทรียภาพทางศิลปะ",
+    "ความคิดสร้างสรรค์",
+    "การใส่ใจและพัฒนาผู้อื่น"
+  ],
+  "สมรรถนะพนักงานราชการทั่วไป": [
+    "การทำงานที่เป็นเลิศ",
+    "การยึดมั่นในความถูกต้องและมีจิตบริการ",
+    "การประสานความร่วมมือร่วมใจ",
+    "ความยืดหยุ่น คล่องตัว ริเริ่มสร้างสรรค์"
+  ],
+  "สมรรถนะลูกจ้างประจำ": [
+    "ความสามารถ และความอุตสาหะในการปฏิบัติงาน",
+    "การรักษาวินัย และปฏิบัติตนเหมาะสมกับการเป็นลูกจ้างประจำ",
+    "ความรับผิดชอบ",
+    "ความร่วมมือ",
+    "สภาพการมาปฏิบัติงาน",
+    "การวางแผน",
+    "ความคิดริเริ่ม"
+  ]
+};
 
 type FormValues = z.infer<typeof formSchema>;
 
-const formatThaiDate = (date: Date) => {
-  return `${format(date, "d MMM", { locale: th })} ${date.getFullYear() + 543}`;
-};
+type SupervisorCandidate = { id: string; name: string; fullName: string; position: string | null };
 
-export function CreateIDPForm() {
+export function CreateIDPForm({
+  initialData,
+  planId,
+  users = [],
+}: {
+  initialData?: any;
+  planId?: string;
+  users?: SupervisorCandidate[];
+}) {
   const router = useRouter();
-  
-  const { control, handleSubmit, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(formSchema) as any,
-    defaultValues: {
-      competencyType: "",
-      developmentMethod: "",
-      details: "",
-      budget: 0,
-    },
+  const { user } = useUser();
+  const [step, setStep] = useState(1);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSupervisorDropdown, setShowSupervisorDropdown] = useState(false);
+
+  const availableCategories = Object.keys(categoryOptions).filter((cat) => {
+    if (user?.employeeType === "ข้าราชการพลเรือนสามัญ") {
+      return cat !== "สมรรถนะพนักงานราชการทั่วไป" && cat !== "สมรรถนะลูกจ้างประจำ";
+    }
+    if (user?.employeeType === "พนักงานราชการทั่วไป") {
+      return cat === "สมรรถนะพนักงานราชการทั่วไป";
+    }
+    if (user?.employeeType === "ลูกจ้างประจำ") {
+      return cat === "สมรรถนะลูกจ้างประจำ";
+    }
+    return true; // Default
   });
 
-  function onSubmit(data: FormValues) {
-    console.log("Submitted Data:", data);
-    // TODO: Send to API
-    router.push("/");
+
+
+  const {
+    control,
+    handleSubmit,
+    trigger,
+    clearErrors,
+    setValue,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(getFormSchema(user?.employeeType)) as any,
+    defaultValues: {
+      devCategory: initialData?.devCategory || "",
+      devTopic: initialData?.devTopic || "",
+      courseTitle: initialData?.courseTitle || "",
+      dev70: initialData?.dev70 || "",
+      dev20: initialData?.dev20 || "",
+      dev10: initialData?.dev10 || "",
+      supervisorName: initialData?.supervisorName || "",
+      supervisorPosition: initialData?.supervisorPosition || "",
+    },
+  });
+  const watchCategory = useWatch({
+    control,
+    name: "devCategory",
+  });
+
+  const watchTopic = useWatch({
+    control,
+    name: "devTopic",
+  });
+
+
+  async function onSubmit(data: FormValues) {
+    setIsSubmitting(true);
+    try {
+      let result;
+      if (planId) {
+        result = await updateIDPPlan(planId, data);
+      } else {
+        result = await createIDPPlan(data);
+      }
+
+      if (result.error) {
+        alert("Error: " + result.error);
+        setIsSubmitting(false);
+      } else {
+        router.push("/idp"); // redirect to idp list
+      }
+    } catch (error) {
+      console.error(error);
+      setIsSubmitting(false);
+    }
   }
 
+  const handleNextToStep2 = async () => {
+    const isValid = await trigger([
+      "devCategory",
+      "devTopic",
+      "courseTitle"
+    ]);
+
+    // ป้องกันไม่ให้ zodResolver แสดง error ของหน้าถัดไปล่วงหน้า
+    clearErrors(["dev70", "dev20", "dev10"]);
+
+    if (isValid) {
+      setStep(2);
+    }
+  };
+
+  const handleNextToStep3 = async () => {
+    const isValid = await trigger([
+      "dev70",
+      "dev20",
+      "dev10"
+    ]);
+
+    clearErrors(["supervisorName"]);
+
+    if (isValid) {
+      setStep(3);
+    }
+  };
+
+  const onError = (errors: any) => {
+    if (errors.devCategory || errors.devTopic || errors.courseTitle) {
+      setStep(1);
+    } else if (errors.dev70 || errors.dev20 || errors.dev10) {
+      setStep(2);
+    } else {
+      setStep(3);
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      {/* ส่วนที่ 1: ข้อมูลสมรรถนะ */}
-      <div className="space-y-6 bg-slate-50/50 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-purple-800/30 shadow-sm">
-        <h2 className="text-xl font-bold text-[#2e1065] dark:text-purple-100 border-b-2 border-purple-100 dark:border-purple-800/50 pb-3 flex items-center gap-3">
-          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-200 text-sm">1</span>
-          ข้อมูลสมรรถนะ
-        </h2>
-        
-        <div className="space-y-2">
-          <Label className="text-[#2e1065] dark:text-purple-200 font-bold" htmlFor="competencyType">เลือกสมรรถนะที่ต้องการพัฒนา</Label>
-          <Controller
-            control={control}
-            name="competencyType"
-            render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger id="competencyType" className="w-full h-12 bg-white dark:bg-[#150a29] dark:border-purple-800/50 dark:text-white focus:ring-purple-500/30 focus:border-purple-500 transition-all shadow-sm">
-                  <SelectValue placeholder="-- เลือกประเภทสมรรถนะ --" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="core">สมรรถนะหลัก (Core Competency)</SelectItem>
-                  <SelectItem value="managerial">สมรรถนะทางการบริหาร (Managerial Competency)</SelectItem>
-                  <SelectItem value="functional">สมรรถนะเฉพาะสายงาน (Functional Competency)</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          />
-          {errors.competencyType && <p className="text-sm font-medium text-destructive">{errors.competencyType.message}</p>}
-        </div>
+    <form onSubmit={(e) => { setHasSubmitted(true); handleSubmit(onSubmit, onError)(e); }} className="space-y-8">
+      {/* หัวข้อใหญ่หลัก */}
+      {step === 1 && (
+        <div className="space-y-6 bg-slate-50/50 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-purple-800/30 shadow-sm">
+          <div className="flex flex-col space-y-8">
+            {/* หมวดหมู่หลัก */}
+            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
+              {/* รายละเอียดหมวดหมู่สมรรถนะ */}
+              {user?.employeeType === "ข้าราชการพลเรือนสามัญ" && (
+                <details className="mb-6 group bg-purple-50/50 dark:bg-purple-900/20 rounded-2xl border border-purple-100 dark:border-purple-800/50 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <summary className="flex items-center justify-between p-5 sm:p-6 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800/80">
+                        <Info className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                      </div>
+                      <h3 className="font-bold text-[#2e1065] dark:text-purple-200">
+                        ดูรายละเอียดหมวดหมู่สมรรถนะ
+                      </h3>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-purple-600 dark:text-purple-400 group-open:rotate-180 transition-transform duration-300" />
+                  </summary>
+                  <div className="px-5 pb-5 sm:px-6 sm:pb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 border-t border-purple-100 dark:border-purple-800/50 pt-5">
+                      {availableCategories.map(cat => (
+                        <div key={cat} className="bg-white dark:bg-[#150a29] p-4 rounded-xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all group">
+                          <h4 className="font-bold text-purple-700 dark:text-purple-300 text-sm mb-3 pb-2 border-b border-purple-50 dark:border-purple-800/30 group-hover:border-purple-200 dark:group-hover:border-purple-700 transition-colors">
+                            {cat}
+                          </h4>
+                          <ul className="space-y-2">
+                            {categoryOptions[cat as keyof typeof categoryOptions].map((item, idx) => (
+                              <li
+                                key={idx}
+                                className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2 leading-relaxed cursor-pointer hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                                onClick={() => {
+                                  setValue("devCategory", cat, { shouldValidate: true });
+                                  setValue("devTopic", item, { shouldValidate: true });
+                                  setTimeout(() => {
+                                    document.getElementById("courseTitleField")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                  }, 100);
+                                }}
+                              >
+                                <div className="w-1.5 h-1.5 rounded-full bg-purple-200 dark:bg-purple-800 mt-1.5 shrink-0 group-hover:bg-purple-400 dark:group-hover:bg-purple-500 transition-colors" />
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </details>
+              )}
 
-        <div className="space-y-2">
-          <Label className="text-[#2e1065] dark:text-purple-200 font-bold" htmlFor="details">ระบุหัวข้อหรือทักษะที่ต้องการพัฒนาอย่างละเอียด</Label>
-          <Controller
-            control={control}
-            name="details"
-            render={({ field }) => (
-              <Textarea
-                id="details"
-                placeholder="ตัวอย่าง: ต้องการพัฒนาทักษะการใช้โปรแกรมวิเคราะห์ข้อมูลทางสถิติ R เพื่อประยุกต์ใช้ในงานวิจัย..."
-                className="min-h-[120px] resize-none bg-white dark:bg-[#150a29] dark:border-purple-800/50 dark:text-white dark:placeholder-slate-500 focus-visible:ring-purple-500/30 focus-visible:border-purple-500 transition-all shadow-sm p-4"
-                {...field}
-              />
-            )}
-          />
-          {errors.details && <p className="text-sm font-medium text-destructive">{errors.details.message}</p>}
-        </div>
-      </div>
-
-      {/* ส่วนที่ 2: วิธีการพัฒนา */}
-      <div className="space-y-6 bg-slate-50/50 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-purple-800/30 shadow-sm">
-        <h2 className="text-xl font-bold text-[#2e1065] dark:text-purple-100 border-b-2 border-purple-100 dark:border-purple-800/50 pb-3 flex items-center gap-3">
-          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-200 text-sm">2</span>
-          วิธีการพัฒนา
-        </h2>
-        
-        <div className="space-y-4">
-          <Label className="text-[#2e1065] dark:text-purple-200 font-bold">รูปแบบการพัฒนา</Label>
-          <Controller
-            control={control}
-            name="developmentMethod"
-            render={({ field }) => (
-              <RadioGroup
-                onValueChange={field.onChange}
-                value={field.value}
-                className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-6"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="training" id="r-training" className="dark:border-purple-700 dark:text-purple-400" />
-                  <Label htmlFor="r-training" className="font-normal cursor-pointer dark:text-slate-300">การฝึกอบรม</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="coaching" id="r-coaching" className="dark:border-purple-700 dark:text-purple-400" />
-                  <Label htmlFor="r-coaching" className="font-normal cursor-pointer dark:text-slate-300">การสอนงาน (Coaching)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="self-learning" id="r-self-learning" className="dark:border-purple-700 dark:text-purple-400" />
-                  <Label htmlFor="r-self-learning" className="font-normal cursor-pointer dark:text-slate-300">การเรียนรู้ด้วยตนเอง</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="project" id="r-project" className="dark:border-purple-700 dark:text-purple-400" />
-                  <Label htmlFor="r-project" className="font-normal cursor-pointer dark:text-slate-300">การมอบหมายโครงการ</Label>
-                </div>
-              </RadioGroup>
-            )}
-          />
-          {errors.developmentMethod && <p className="text-sm font-medium text-destructive">{errors.developmentMethod.message}</p>}
-        </div>
-      </div>
-
-      {/* ส่วนที่ 3: ระยะเวลาและงบประมาณ */}
-      <div className="space-y-6 bg-slate-50/50 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-purple-800/30 shadow-sm">
-        <h2 className="text-xl font-bold text-[#2e1065] dark:text-purple-100 border-b-2 border-purple-100 dark:border-purple-800/50 pb-3 flex items-center gap-3">
-          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-200 text-sm">3</span>
-          ระยะเวลาและงบประมาณ
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="flex flex-col space-y-2">
-            <Label className="text-[#2e1065] dark:text-purple-200 font-bold">ช่วงเวลาที่คาดว่าจะดำเนินการ</Label>
-            <Controller
-              control={control}
-              name="dateRange"
-              render={({ field }) => (
-                <Popover>
-                  <PopoverTrigger 
-                    className={cn(
-                      "inline-flex items-center justify-start rounded-lg border border-slate-200 dark:border-purple-800/50 bg-white dark:bg-[#150a29] hover:bg-slate-50 dark:hover:bg-purple-900/30 hover:text-[#2e1065] dark:hover:text-white h-12 px-4 w-full text-left font-medium focus-visible:ring-purple-500/30 transition-all shadow-sm",
-                      !field.value && "text-slate-400 dark:text-slate-500"
-                    )}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label
+                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
+                  htmlFor="devCategory"
+                >
+                  {(user?.employeeType === "พนักงานราชการทั่วไป" || user?.employeeType === "ลูกจ้างประจำ") ? "สมรรถนะที่ต้องการพัฒนา" : "ความรู้/ทักษะ/สมรรถนะที่ต้องการพัฒนา"}
+                </Label>
+                {errors.devCategory && (
+                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+                    {errors.devCategory.message}
+                  </span>
+                )}
+              </div>
+              <Controller
+                control={control}
+                name="devCategory"
+                render={({ field }) => (
+                  <Select
+                    onValueChange={(val) => {
+                      field.onChange(val);
+                      setValue("devTopic", "");
+                    }}
+                    value={field.value}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                    {field.value?.from ? (
-                      field.value.to ? (
-                        <span className="truncate">
-                          {formatThaiDate(field.value.from)} - {formatThaiDate(field.value.to)}
-                        </span>
-                      ) : (
-                        <span className="truncate">
-                          {formatThaiDate(field.value.from)}
-                        </span>
-                      )
-                    ) : (
-                      <span>เลือกวันที่เริ่มต้น - สิ้นสุด</span>
-                    )}
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-white dark:bg-[#150a29] border border-slate-200 dark:border-purple-800 shadow-lg rounded-xl overflow-hidden" align="start">
-                    <Calendar
-                      initialFocus
-                      mode="range"
-                      defaultMonth={field.value?.from}
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      numberOfMonths={1}
-                      locale={th}
-                      captionLayout="dropdown"
-                      startMonth={new Date(new Date().getFullYear() - 5, 0)}
-                      endMonth={new Date(new Date().getFullYear() + 10, 11)}
-                      className="p-3"
-                      classNames={{
-                        day_selected: "bg-[#4c1d95] text-white hover:bg-[#5b21b6] focus:bg-[#4c1d95]",
-                        day_today: "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200 font-bold rounded-md",
-                        day: "h-8 w-8 p-0 font-normal text-sm aria-selected:opacity-100 hover:bg-slate-100 dark:hover:bg-purple-900/40 rounded-md transition-colors",
-                        button_previous: "h-7 w-7 bg-transparent hover:bg-slate-100 dark:hover:bg-purple-900/40 rounded-md transition-colors",
-                        button_next: "h-7 w-7 bg-transparent hover:bg-slate-100 dark:hover:bg-purple-900/40 rounded-md transition-colors",
-                        cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-purple-50 dark:[&:has([aria-selected])]:bg-purple-900/20",
-                        day_range_middle: "aria-selected:bg-purple-50 dark:aria-selected:bg-purple-900/20 aria-selected:text-[#2e1065] dark:aria-selected:text-purple-200 rounded-none",
-                      }}
-                      formatters={{
-                        formatCaption: (date) => {
-                          return `${format(date, "LLLL", { locale: th })} ${date.getFullYear() + 543}`;
-                        },
-                        formatYearCaption: (date) => {
-                          return `${date.getFullYear() + 543}`;
-                        },
-                        formatYearDropdown: (date) => {
-                          return `${date.getFullYear() + 543}`;
-                        }
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-              )}
-            />
-            {errors.dateRange && <p className="text-sm font-medium text-destructive">{errors.dateRange.message}</p>}
-          </div>
+                    <SelectTrigger
+                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.devCategory ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
+                    >
+                      <SelectValue placeholder="-- เลือกระดับความต้องการพัฒนา --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label className="text-[#2e1065] dark:text-purple-200 font-bold" htmlFor="budget">งบประมาณโดยประมาณ (บาท)</Label>
-            <Controller
-              control={control}
-              name="budget"
-              render={({ field }) => (
-                <Input 
-                  id="budget"
-                  type="number" 
-                  placeholder="0.00" 
-                  className="h-12 bg-white dark:bg-[#150a29] dark:border-purple-800/50 dark:text-white focus-visible:ring-purple-500/30 focus-visible:border-purple-500 transition-all shadow-sm text-lg font-medium"
-                  {...field} 
+            {/* หัวข้อย่อย */}
+            {watchCategory && (
+              <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label
+                    className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
+                    htmlFor="devTopic"
+                  >
+                    {watchCategory}
+                  </Label>
+                  {errors.devTopic && (
+                    <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+                      {errors.devTopic.message}
+                    </span>
+                  )}
+                </div>
+                <Controller
+                  control={control}
+                  name="devTopic"
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger
+                        className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all ${errors.devTopic ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
+                      >
+                        <SelectValue placeholder={`-- เลือก${watchCategory} --`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoryOptions[watchCategory as keyof typeof categoryOptions]?.map((topic) => (
+                          <SelectItem key={topic} value={topic}>
+                            {topic}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 />
-              )}
-            />
-            {errors.budget && <p className="text-sm font-medium text-destructive">{errors.budget.message}</p>}
+              </div>
+            )}
+
+            {/* หัวข้อหลักสูตรที่ต้องการ */}
+            {watchTopic && (
+              <div id="courseTitleField" className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label
+                    className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
+                    htmlFor="courseTitle"
+                  >
+                    หัวข้อหลักสูตรที่ต้องการ
+                  </Label>
+                  {errors.courseTitle && (
+                    <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+                      {errors.courseTitle.message}
+                    </span>
+                  )}
+                </div>
+                <Controller
+                  control={control}
+                  name="courseTitle"
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="กรอกชื่อหลักสูตร"
+                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all md:text-base text-base ${errors.courseTitle ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
+                    />
+                  )}
+                />
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
+
+      {/* หัวข้อใหญ่ที่ 2 */}
+      {step === 2 && (
+        <div className="space-y-6 bg-slate-50/50 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-purple-800/30 shadow-sm">
+          <div className="border-b-2 border-purple-100 dark:border-purple-800/50 pb-3">
+            <h2 className="text-xl font-bold text-[#2e1065] dark:text-purple-100 flex items-center gap-3">
+              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-200 text-sm shrink-0">
+                2
+              </span>
+              วิธีการพัฒนารูปแบบ 70:20:10
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 ml-11">
+              โดยต้องดำเนินการพัฒนาครบร้อยละ 100
+            </p>
+          </div>
+
+          <div className="flex flex-col space-y-8 mt-6">
+            {/* หมวด 70% */}
+            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label
+                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
+                  htmlFor="dev70"
+                >
+                  70% การเรียนรู้จากประสบการณ์
+                </Label>
+                {hasSubmitted && errors.dev70 && (
+                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+                    {errors.dev70.message}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                การเรียนรู้จากการลงมือปฏิบัติจริง การได้รับมอบหมายงาน การติดตามสังเกตงาน หรือศึกษาด้วยตนเอง
+              </p>
+              <Controller
+                control={control}
+                name="dev70"
+                render={({ field }) => (
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    className="flex flex-col space-y-4 mt-3 bg-white dark:bg-[#150a29] p-5 rounded-xl border border-slate-100 dark:border-purple-800/50 shadow-sm"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <RadioGroupItem
+                        value="ลงมือปฏิบัติ"
+                        id="dev70-1"
+                        className="h-5 w-5 mt-0.5"
+                      />
+                      <Label
+                        htmlFor="dev70-1"
+                        className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
+                      >
+                        ลงมือปฏิบัติ
+                      </Label>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <RadioGroupItem
+                        value="ได้รับมอบหมายงาน"
+                        id="dev70-2"
+                        className="h-5 w-5 mt-0.5"
+                      />
+                      <Label
+                        htmlFor="dev70-2"
+                        className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
+                      >
+                        ได้รับมอบหมายงาน
+                      </Label>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <RadioGroupItem
+                        value="เรียนรู้ด้วยตนเอง"
+                        id="dev70-3"
+                        className="h-5 w-5 mt-0.5"
+                      />
+                      <Label
+                        htmlFor="dev70-3"
+                        className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300 leading-relaxed"
+                      >
+                        เรียนรู้ด้วยตนเอง
+                      </Label>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <RadioGroupItem
+                        value="ติดตามสังเกตงาน"
+                        id="dev70-4"
+                        className="h-5 w-5 mt-0.5"
+                      />
+                      <Label
+                        htmlFor="dev70-4"
+                        className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
+                      >
+                        ติดตามสังเกตงาน
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                )}
+              />
+            </div>
+
+            {/* หมวด 20% */}
+            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label
+                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
+                  htmlFor="dev20"
+                >
+                  20% การเรียนรู้จากผู้อื่น
+                </Label>
+                {hasSubmitted && errors.dev20 && (
+                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+                    {errors.dev20.message}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                การเรียนรู้ผ่านการพูดคุย การรับคำปรึกษา แนะนำ หรือการสอนงานจากหัวหน้าและเพื่อนร่วมงาน
+              </p>
+              <Controller
+                control={control}
+                name="dev20"
+                render={({ field }) => (
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    className="flex flex-col space-y-4 mt-3 bg-white dark:bg-[#150a29] p-5 rounded-xl border border-slate-100 dark:border-purple-800/50 shadow-sm"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <RadioGroupItem
+                        value="ปรึกษาแนะนำ"
+                        id="dev20-1"
+                        className="h-5 w-5 mt-0.5"
+                      />
+                      <Label
+                        htmlFor="dev20-1"
+                        className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
+                      >
+                        ปรึกษาแนะนำ
+                      </Label>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <RadioGroupItem
+                        value="สอนงาน"
+                        id="dev20-2"
+                        className="h-5 w-5 mt-0.5"
+                      />
+                      <Label
+                        htmlFor="dev20-2"
+                        className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
+                      >
+                        สอนงาน
+                      </Label>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <RadioGroupItem
+                        value="รับข้อมูลป้อนกลับ"
+                        id="dev20-3"
+                        className="h-5 w-5 mt-0.5"
+                      />
+                      <Label
+                        htmlFor="dev20-3"
+                        className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
+                      >
+                        รับข้อมูลป้อนกลับ
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                )}
+              />
+            </div>
+
+            {/* หมวด 10% */}
+            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label
+                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
+                  htmlFor="dev10"
+                >
+                  10% การเรียนรู้จากการฝึกอบรม
+                </Label>
+                {hasSubmitted && errors.dev10 && (
+                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+                    {errors.dev10.message}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                การเรียนรู้ผ่านการฝึกอบรม สัมมนา ทั้งในรูปแบบทางการและไม่เป็นทางการ
+              </p>
+              <Controller
+                control={control}
+                name="dev10"
+                render={({ field }) => (
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    className="flex flex-col space-y-4 mt-3 bg-white dark:bg-[#150a29] p-5 rounded-xl border border-slate-100 dark:border-purple-800/50 shadow-sm"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <RadioGroupItem
+                        value="ฝึกอบรม/เรียนรู้ผ่านสื่อ"
+                        id="dev10-1"
+                        className="h-5 w-5 mt-0.5"
+                      />
+                      <Label
+                        htmlFor="dev10-1"
+                        className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300 leading-relaxed"
+                      >
+                        ฝึกอบรม/เรียนรู้ผ่านสื่อ
+                      </Label>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <RadioGroupItem
+                        value="ประชุม/สัมมนา"
+                        id="dev10-2"
+                        className="h-5 w-5 mt-0.5"
+                      />
+                      <Label
+                        htmlFor="dev10-2"
+                        className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
+                      >
+                        ประชุม/สัมมนา
+                      </Label>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <RadioGroupItem
+                        value="อบรม/ประชุมแบบไม่เป็นทางการ"
+                        id="dev10-3"
+                        className="h-5 w-5 mt-0.5"
+                      />
+                      <Label
+                        htmlFor="dev10-3"
+                        className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
+                      >
+                        อบรม/ประชุมแบบไม่เป็นทางการ
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                )}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* หัวข้อใหญ่ที่ 3 */}
+      {step === 3 && (
+        <div className="space-y-6 bg-slate-50/50 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-purple-800/30 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="border-b-2 border-purple-100 dark:border-purple-800/50 pb-3">
+            <h2 className="text-xl font-bold text-[#2e1065] dark:text-purple-100 flex items-center gap-3">
+              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-200 text-sm shrink-0">
+                3
+              </span>
+              ข้อมูลผู้กำกับดูแลแผน IDP
+            </h2>
+          </div>
+
+          <div className="flex flex-col space-y-8 mt-6">
+            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label
+                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
+                  htmlFor="supervisorName"
+                >
+                  ชื่อ-สกุลผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ
+                </Label>
+                {hasSubmitted && errors.supervisorName && (
+                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+                    {errors.supervisorName.message}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                หากค้นหาชื่อไม่พบ แสดงว่าผู้บังคับบัญชาของท่านยังไม่เคยเข้าใช้งานระบบ ให้ท่านพิมพ์กรอกชื่อ-สกุลด้วยตนเองตามปกติ
+              </p>
+              <Controller
+                control={control}
+                name="supervisorName"
+                render={({ field }) => (
+                  <div className="relative">
+                    <Input
+                      {...field}
+                      onFocus={() => setShowSupervisorDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowSupervisorDropdown(false), 200)}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setShowSupervisorDropdown(true);
+                      }}
+                      placeholder="กรุณากรอกชื่อ-สกุลผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ"
+                      className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all md:text-base text-base ${hasSubmitted && errors.supervisorName ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
+                    />
+                    {showSupervisorDropdown && (
+                      <div className="absolute z-10 w-full mt-2 bg-white dark:bg-[#1a0b2e] border border-slate-100 dark:border-purple-800/50 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                        {users
+                          .filter(u => field.value ? (u.name.includes(field.value) || u.fullName.includes(field.value)) : true)
+                          .slice(0, 10)
+                          .map(u => (
+                            <div
+                              key={u.id}
+                              className="px-4 py-3 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/30 text-[#2e1065] dark:text-purple-100 transition-colors border-b border-slate-50 dark:border-purple-900/20 last:border-0"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                field.onChange(u.fullName);
+                                if (u.position) setValue("supervisorPosition", u.position, { shouldValidate: true });
+                                setShowSupervisorDropdown(false);
+                              }}
+                            >
+                              <div className="font-bold">{u.name}</div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{u.position}</div>
+                            </div>
+                          ))}
+                        {field.value && users.filter(u => u.name.includes(field.value) || u.fullName.includes(field.value)).length === 0 && (
+                          <div className="px-4 py-3 text-slate-500 text-sm">ไม่พบรายชื่อในระบบ</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              />
+            </div>
+
+            <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label
+                  className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
+                  htmlFor="supervisorPosition"
+                >
+                  ตำแหน่งผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ
+                </Label>
+                {hasSubmitted && errors.supervisorPosition && (
+                  <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+                    {errors.supervisorPosition.message}
+                  </span>
+                )}
+              </div>
+              <Controller
+                control={control}
+                name="supervisorPosition"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    placeholder="กรุณากรอกตำแหน่งผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ"
+                    className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all md:text-base text-base ${hasSubmitted && errors.supervisorPosition ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
+                  />
+                )}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="pt-8 mt-8 flex justify-end items-center gap-4">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={() => router.push("/")}
-          className="h-12 px-8 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-purple-900/30 border-slate-200 dark:border-purple-800/50 transition-all"
-        >
-          ยกเลิก
-        </Button>
-        <Button 
-          type="submit" 
-          className="h-12 px-8 rounded-xl font-bold text-white shadow-[0_4px_14px_0_rgba(91,33,182,0.39)] transition-all hover:shadow-[0_6px_20px_rgba(91,33,182,0.23)] hover:-translate-y-0.5 bg-gradient-to-r from-[#4c1d95] to-[#2e1065] hover:from-[#5b21b6] hover:to-[#4c1d95] dark:from-[#5b21b6] dark:to-[#3b0764] dark:hover:from-[#6d28d9] dark:hover:to-[#4c1d95] border-none"
-        >
-          บันทึกและส่งอนุมัติ
-        </Button>
+        {step === 1 && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={(e) => { e.preventDefault(); router.push("/"); }}
+              className="h-12 px-8 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-purple-900/30 border-slate-200 dark:border-purple-800/50 transition-all"
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              type="button"
+              onClick={(e) => { e.preventDefault(); handleNextToStep2(); }}
+              className="h-12 px-8 rounded-xl font-bold text-white shadow-[0_4px_14px_0_rgba(91,33,182,0.39)] transition-all hover:shadow-[0_6px_20px_rgba(91,33,182,0.23)] hover:-translate-y-0.5 bg-gradient-to-r from-[#4c1d95] to-[#2e1065] hover:from-[#5b21b6] hover:to-[#4c1d95] dark:from-[#5b21b6] dark:to-[#3b0764] dark:hover:from-[#6d28d9] dark:hover:to-[#4c1d95] border-none"
+            >
+              ถัดไป
+            </Button>
+          </>
+        )}
+        {step === 2 && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={(e) => { e.preventDefault(); setStep(1); }}
+              className="h-12 px-8 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-purple-900/30 border-slate-200 dark:border-purple-800/50 transition-all"
+            >
+              ย้อนกลับ
+            </Button>
+            <Button
+              type="button"
+              onClick={(e) => { e.preventDefault(); handleNextToStep3(); }}
+              className="h-12 px-8 rounded-xl font-bold text-white shadow-[0_4px_14px_0_rgba(91,33,182,0.39)] transition-all hover:shadow-[0_6px_20px_rgba(91,33,182,0.23)] hover:-translate-y-0.5 bg-gradient-to-r from-[#4c1d95] to-[#2e1065] hover:from-[#5b21b6] hover:to-[#4c1d95] dark:from-[#5b21b6] dark:to-[#3b0764] dark:hover:from-[#6d28d9] dark:hover:to-[#4c1d95] border-none"
+            >
+              ถัดไป
+            </Button>
+          </>
+        )}
+        {step === 3 && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={(e) => { e.preventDefault(); setStep(2); }}
+              className="h-12 px-8 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-purple-900/30 border-slate-200 dark:border-purple-800/50 transition-all"
+            >
+              ย้อนกลับ
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="h-12 px-8 rounded-xl font-bold text-white shadow-[0_4px_14px_0_rgba(91,33,182,0.39)] transition-all hover:shadow-[0_6px_20px_rgba(91,33,182,0.23)] hover:-translate-y-0.5 bg-gradient-to-r from-[#4c1d95] to-[#2e1065] hover:from-[#5b21b6] hover:to-[#4c1d95] dark:from-[#5b21b6] dark:to-[#3b0764] dark:hover:from-[#6d28d9] dark:hover:to-[#4c1d95] border-none"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  กำลังบันทึก...
+                </>
+              ) : (
+                planId ? "บันทึกการแก้ไข" : "สร้างแผนพัฒนา"
+              )}
+            </Button>
+          </>
+        )}
       </div>
     </form>
   );
