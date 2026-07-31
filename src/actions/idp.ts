@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { db } from "@/db";
 import { idpPlans, users, session as sessionTable } from "@/db/schema";
@@ -437,8 +437,11 @@ export async function getPlansForSupervisor() {
   )
   .orderBy(desc(idpPlans.createdAt));
 
+  const phase = await getSystemPhase();
+  const currentFiscalYear = getCurrentFiscalYear();
+
   return plans.map(p => ({
     ...p,
-    status: getDerivedPlanStatus(p.status, p.selfEvaluationResult)
+    status: getDerivedPlanStatus(phase, p.selfEvaluationResult, p.fiscalYear, currentFiscalYear)
   }));
 }

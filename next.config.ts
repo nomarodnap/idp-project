@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['idp.fisheries.go.th', 'www.idp.fisheries.go.th']
+    }
+  }
 };
 
 export default nextConfig;

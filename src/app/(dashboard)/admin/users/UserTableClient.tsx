@@ -22,6 +22,8 @@ type UserType = {
   systemRole: string;
   department: string | null;
   division: string | null;
+  avatarUrl: string | null;
+  image: string | null;
 };
 
 export default function UserTableClient({ initialUsers }: { initialUsers: UserType[] }) {
@@ -70,7 +72,7 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
             />
           </div>
           <div className="flex gap-4 w-full sm:w-auto">
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <Select value={typeFilter} onValueChange={(val) => setTypeFilter(val || "ทั้งหมด")}>
               <SelectTrigger className="w-full sm:w-[150px] h-12 rounded-xl border-slate-200 dark:border-purple-900/50">
                 <SelectValue placeholder="ประเภท" />
               </SelectTrigger>
@@ -81,7 +83,7 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
                 <SelectItem value="ลูกจ้างประจำ">ลูกจ้าง</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <Select value={roleFilter} onValueChange={(val) => setRoleFilter(val || "ทั้งหมด")}>
               <SelectTrigger className="w-full sm:w-[150px] h-12 rounded-xl border-slate-200 dark:border-purple-900/50">
                 <SelectValue placeholder="สิทธิ์ในระบบ" />
               </SelectTrigger>
@@ -115,7 +117,7 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
                         <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-purple-800 bg-slate-100 dark:bg-purple-900/50 flex items-center justify-center">
                           {user.avatarUrl || user.image ? (
                             <img
-                              src={user.avatarUrl || user.image}
+                              src={user.avatarUrl || user.image || undefined}
                               alt={user.name || ""}
                               className="h-full w-full object-cover"
                             />
