@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+﻿import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
 
   const statCards = [
     { title: "แผนทั้งหมด", value: allCount.toString(), icon: FileText, color: "text-blue-600", subtitle: "แผนพัฒนาสะสมทั้งหมด" },
-    { title: "กำลังดำเนินการ", value: inProgressCount.toString(), icon: Loader2, color: "text-amber-500", subtitle: "อยู่ระหว่างศึกษา" },
+    { title: "กำลังดำเนินการ", value: inProgressCount.toString(), icon: Loader2, color: "text-amber-500", subtitle: "อยู่ระหว่างพัฒนา" },
     { title: "รอการประเมินผล", value: pendingCount.toString(), icon: Clock, color: "text-orange-500", subtitle: "รอประเมินผลด้วยตนเอง" },
     { title: "เสร็จสิ้น", value: totalEvaluated.toString(), icon: CheckCircle2, color: "text-emerald-600", subtitle: totalEvaluated > 0 ? `ผ่านเกณฑ์ ${successPercentage}%` : "ยังไม่มีผลประเมิน" },
   ];
