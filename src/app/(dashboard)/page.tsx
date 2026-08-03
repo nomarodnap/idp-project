@@ -1,4 +1,4 @@
-﻿import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -174,7 +174,7 @@ export default async function DashboardPage() {
                     `}>
                       {plan.status}
                     </Badge>
-                    {(currentPhase === 1 || currentPhase === 2 || currentPhase === 4) && <PlanActionMenu planId={plan.id} currentPhase={currentPhase} />}
+                    {(currentPhase === 1 || currentPhase === 2 || currentPhase === 4) && plan.selfEvaluationResult === null && <PlanActionMenu planId={plan.id} currentPhase={currentPhase} />}
                   </div>
                   <div className="text-sm font-medium text-slate-400 dark:text-slate-500 flex items-center gap-1.5 shrink-0">
                     <Clock className="w-4 h-4" />
