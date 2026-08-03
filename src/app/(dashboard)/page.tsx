@@ -12,7 +12,7 @@ import { PlanActionMenu } from "@/components/PlanActionMenu";
 
 const statCards = [
   { title: "แผนทั้งหมด", value: "12", icon: FileText, color: "text-blue-600", subtitle: "แผนพัฒนาตลอดปี" },
-  { title: "กำลังดำเนินการ", value: "3", icon: Loader2, color: "text-amber-500", subtitle: "อยู่ระหว่างศึกษา" },
+  { title: "กำลังดำเนินการ", value: "3", icon: Loader2, color: "text-amber-500", subtitle: "อยู่ระหว่างการพัฒนา" },
   { title: "รอการอนุมัติ", value: "2", icon: Clock, color: "text-orange-500", subtitle: "รอการประเมินผล" },
   { title: "เสร็จสิ้น", value: "7", icon: CheckCircle2, color: "text-emerald-600", subtitle: "ผ่านเกณฑ์ 100%" },
 ];
@@ -66,7 +66,6 @@ export default async function DashboardPage() {
 
   const statCards = [
     { title: "แผนทั้งหมด", value: allCount.toString(), icon: FileText, color: "text-blue-600", subtitle: "แผนพัฒนาสะสมทั้งหมด" },
-    { title: "รออนุมัติ", value: pendingApprovalCount.toString(), icon: ClipboardList, color: "text-purple-500", subtitle: "รอผู้บังคับบัญชาอนุมัติ" },
     { title: "กำลังดำเนินการ", value: inProgressCount.toString(), icon: Loader2, color: "text-amber-500", subtitle: "อยู่ระหว่างศึกษา" },
     { title: "รอการประเมินผล", value: pendingCount.toString(), icon: Clock, color: "text-orange-500", subtitle: "รอประเมินผลด้วยตนเอง" },
     { title: "เสร็จสิ้น", value: totalEvaluated.toString(), icon: CheckCircle2, color: "text-emerald-600", subtitle: totalEvaluated > 0 ? `ผ่านเกณฑ์ ${successPercentage}%` : "ยังไม่มีผลประเมิน" },
@@ -117,7 +116,7 @@ export default async function DashboardPage() {
       </Card>
 
       {/* Stat Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat, index) => (
           <Card key={index} className="shadow-md hover:shadow-xl transition-all duration-300 border-slate-100 dark:border-purple-900/50 rounded-2xl bg-white dark:bg-[#1a0b2e] group hover:-translate-y-1 relative overflow-hidden">
             <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 to-purple-400 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300" />

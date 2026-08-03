@@ -135,7 +135,7 @@ export default function IDPTableClient({ initialPlans, IDP_PHASE }: { initialPla
                     className="hover:bg-purple-50/30 dark:hover:bg-purple-900/20 transition-colors border-slate-100 dark:border-purple-900/30 group cursor-pointer"
                   >
                     <TableCell className="px-6 sm:px-8 py-5">
-                      <div className="font-bold text-slate-700 dark:text-purple-100 line-clamp-2 leading-snug group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all">{plan.courseTitle}</div>
+                      <div className="font-bold text-slate-700 dark:text-purple-100 truncate max-w-[80px] sm:max-w-[100px] md:max-w-[120px] lg:max-w-[150px] xl:max-w-[200px] leading-snug group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all">{plan.courseTitle}</div>
                       <div className="text-xs font-semibold text-purple-600 dark:text-purple-400 mt-1">
                         {plan.planCode || "IDP-LEGACY"}
                       </div>

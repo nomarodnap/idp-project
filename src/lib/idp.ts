@@ -25,13 +25,8 @@ export function getDerivedPlanStatus(
     return "ไม่สำเร็จ";
   }
 
-  // Phase 1: All plans are pending approval
-  if (phase === 1) {
-    return "รออนุมัติ";
-  }
-  
-  // Phase 2 & 3: All plans are in progress
-  if (phase === 2 || phase === 3) {
+  // Phase 1, 2 & 3: All plans are in progress
+  if (phase === 1 || phase === 2 || phase === 3) {
     return "กำลังดำเนินการ";
   }
   

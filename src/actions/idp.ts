@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { db } from "@/db";
 import { idpPlans, users, session as sessionTable } from "@/db/schema";
@@ -14,6 +14,9 @@ export async function getIDPPlans(options?: { fetchAll?: boolean, statusFilter?:
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("better-auth.session_token")?.value;
   let currentUserId: string | null = null;
+  let currentUserRole: string | null = null;
+  let currentUserDepartment: string | null = null;
+  let currentUserDivision: string | null = null;
 
   if (sessionToken) {
     const [sessionRecord] = await db
@@ -22,6 +25,17 @@ export async function getIDPPlans(options?: { fetchAll?: boolean, statusFilter?:
       .where(eq(sessionTable.token, sessionToken));
     if (sessionRecord) {
       currentUserId = sessionRecord.userId;
+      
+      const [userRecord] = await db
+        .select({ systemRole: users.systemRole, department: users.department, division: users.division })
+        .from(users)
+        .where(eq(users.id, currentUserId));
+        
+      if (userRecord) {
+        currentUserRole = userRecord.systemRole;
+        currentUserDepartment = userRecord.department;
+        currentUserDivision = userRecord.division;
+      }
     }
   }
 
@@ -29,6 +43,10 @@ export async function getIDPPlans(options?: { fetchAll?: boolean, statusFilter?:
     id: idpPlans.id,
     planCode: idpPlans.planCode,
     userId: idpPlans.userId,
+    userCitizenId: users.citizenId,
+    userTitle: users.title,
+    userFirstName: users.firstName,
+    userLastName: users.lastName,
     userName: users.name,
     userPosition: users.position,
     userEmployeeType: users.employeeType,
@@ -57,6 +75,12 @@ export async function getIDPPlans(options?: { fetchAll?: boolean, statusFilter?:
 
   if (!options?.fetchAll && currentUserId) {
     query = query.where(eq(idpPlans.userId, currentUserId));
+  } else if (options?.fetchAll && currentUserId) {
+    if (currentUserRole === "Viewer_Department" && currentUserDepartment) {
+      query = query.where(eq(users.department, currentUserDepartment));
+    } else if (currentUserRole === "Viewer_Division" && currentUserDivision) {
+      query = query.where(eq(users.division, currentUserDivision));
+    }
   }
 
   // Note: We remove the direct DB `statusFilter` because status is now derived.

@@ -108,14 +108,13 @@ export default function TeamApprovalsClient({ initialPlans }: { initialPlans: an
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap">ผู้ส่งแผน</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden md:table-cell">สังกัด</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden lg:table-cell">ประเภทบุคลากร</TableHead>
-                  <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden xl:table-cell">ผู้กำกับดูแล</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap">สถานะ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {pendingPlans.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
                       ไม่พบข้อมูลแผน IDP
                     </TableCell>
                   </TableRow>
@@ -127,7 +126,7 @@ export default function TeamApprovalsClient({ initialPlans }: { initialPlans: an
                     className="hover:bg-purple-50/30 dark:hover:bg-purple-900/20 transition-colors border-slate-100 dark:border-purple-900/30 group cursor-pointer"
                   >
                     <TableCell className="px-6 sm:px-8 py-4">
-                      <div className="font-bold text-slate-700 dark:text-purple-100 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all">
+                      <div className="font-bold text-slate-700 dark:text-purple-100 truncate max-w-[80px] sm:max-w-[100px] md:max-w-[120px] lg:max-w-[150px] xl:max-w-[200px] group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all">
                         {plan.courseTitle}
                       </div>
                       <div className="text-xs font-semibold text-purple-600 dark:text-purple-400 mt-1">
@@ -188,18 +187,7 @@ export default function TeamApprovalsClient({ initialPlans }: { initialPlans: an
                         {plan.userEmployeeType || "-"}
                       </span>
                     </TableCell>
-                    <TableCell className="px-4 hidden xl:table-cell">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          {plan.supervisorName || "-"}
-                        </span>
-                        {plan.supervisorPosition && (
-                          <span className="text-xs text-slate-500 mt-0.5">
-                            {plan.supervisorPosition}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
+
                     <TableCell className="px-4">
                       <Badge
                         variant="outline"

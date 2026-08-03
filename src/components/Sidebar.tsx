@@ -28,7 +28,9 @@ export function Sidebar({ currentPhase = 1 }: { currentPhase?: number }) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useUser();
-  const isAdmin = user?.systemRole === "Admin";
+  const isSuperAdmin = user?.systemRole === "Admin";
+  const isViewer = user?.systemRole === "Viewer_All" || user?.systemRole === "Viewer_Department" || user?.systemRole === "Viewer_Division";
+  const canViewManagement = isSuperAdmin || isViewer;
 
   return (
     <aside className={cn(
@@ -94,11 +96,13 @@ export function Sidebar({ currentPhase = 1 }: { currentPhase?: number }) {
         </nav>
 
         {/* Admin Navigation */}
-        {isAdmin && (
+        {canViewManagement && (
           <div className="mt-6 px-3">
             {!isCollapsed && <h3 className="px-4 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Management</h3>}
             <nav className="space-y-1">
-              {adminItems.map((item) => {
+              {adminItems
+                .filter(item => isSuperAdmin || item.name !== "ตั้งค่าระบบ (Phase)")
+                .map((item) => {
                 const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
                 return (
                   <Link

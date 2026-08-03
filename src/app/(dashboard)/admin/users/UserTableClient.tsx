@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from "@/components/ui/dropdown-menu";
 import { useState, useTransition } from "react";
 import { updateUserRole } from "@/actions/user";
+import { useUser } from "@/components/UserProvider";
 
 type UserType = {
   id: string;
@@ -31,6 +32,8 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
   const [typeFilter, setTypeFilter] = useState("ทั้งหมด");
   const [roleFilter, setRoleFilter] = useState("ทั้งหมด");
   const [isPending, startTransition] = useTransition();
+  const { user } = useUser();
+  const isViewer = user?.systemRole?.startsWith("Viewer");
 
   const handleRoleChange = (userId: string, newRole: string) => {
     startTransition(async () => {
@@ -90,8 +93,10 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
               <SelectContent>
                 <SelectItem value="ทั้งหมด">ทั้งหมด</SelectItem>
                 <SelectItem value="User">User</SelectItem>
-                <SelectItem value="Supervisor">Supervisor</SelectItem>
                 <SelectItem value="Admin">Admin</SelectItem>
+                <SelectItem value="Viewer_All">Viewer_All</SelectItem>
+                <SelectItem value="Viewer_Department">Viewer_Department</SelectItem>
+                <SelectItem value="Viewer_Division">Viewer_Division</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -106,7 +111,7 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden md:table-cell">สังกัด / ฝ่าย</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden lg:table-cell">ประเภทบุคลากร</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap">สิทธิ์ในระบบ</TableHead>
-                  <TableHead className="text-right font-bold text-[#2e1065] dark:text-purple-200 px-6 sm:px-8 whitespace-nowrap">จัดการ</TableHead>
+                  {!isViewer && <TableHead className="text-right font-bold text-[#2e1065] dark:text-purple-200 px-6 sm:px-8 whitespace-nowrap">จัดการ</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -158,8 +163,9 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
                         {user.systemRole}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right px-6 sm:px-8">
-                      <div className="flex justify-end gap-2">
+                    {!isViewer && (
+                      <TableCell className="text-right px-6 sm:px-8">
+                        <div className="flex justify-end gap-2">
                         <DropdownMenu>
                           <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-xl" title="แก้ไขสิทธิ์" disabled={isPending} />}>
                             <ShieldAlert className="h-4 w-4" />
@@ -171,17 +177,24 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
                               <DropdownMenuItem className="cursor-pointer" onClick={() => handleRoleChange(user.id, "User")}>
                                 User
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="cursor-pointer" onClick={() => handleRoleChange(user.id, "Supervisor")}>
-                                Supervisor
-                              </DropdownMenuItem>
                               <DropdownMenuItem className="cursor-pointer" onClick={() => handleRoleChange(user.id, "Admin")}>
                                 Admin
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="cursor-pointer" onClick={() => handleRoleChange(user.id, "Viewer_All")}>
+                                Viewer_All
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="cursor-pointer" onClick={() => handleRoleChange(user.id, "Viewer_Department")}>
+                                Viewer_Department
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="cursor-pointer" onClick={() => handleRoleChange(user.id, "Viewer_Division")}>
+                                Viewer_Division
                               </DropdownMenuItem>
                             </DropdownMenuGroup>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
                     </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

@@ -4,13 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, Search, Clock, MessageSquareText } from "lucide-react";
+import { CheckCircle2, XCircle, Search, Clock, MessageSquareText, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatThaiDate } from "@/lib/date";
+import { useUser } from "@/components/UserProvider";
 
 export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] }) {
   const router = useRouter();
@@ -19,6 +20,9 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
   const [currentPage, setCurrentPage] = useState(1);
   const [yearFilter, setYearFilter] = useState("ทุกปีงบประมาณ");
   const itemsPerPage = 10;
+  
+  const { user } = useUser();
+  const isAdmin = user?.systemRole === "Admin";
   
   const availableYears = Array.from(new Set(initialPlans.map(p => p.fiscalYear).filter(Boolean))).sort((a, b) => (b as number) - (a as number));
 
@@ -49,6 +53,48 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
   const handleYearChange = (val: string) => {
     setYearFilter(val);
     setCurrentPage(1);
+  };
+
+  const exportToExcel = async () => {
+    try {
+      const XLSX = await import('xlsx');
+      const exportData = pendingPlans.map(p => {
+        const rowData: any = {
+          "รหัสแผน": p.planCode || "IDP-LEGACY",
+          "ชื่อหลักสูตร": p.courseTitle,
+        };
+        
+        if (isAdmin) {
+          rowData["รหัสบัตรประชาชน"] = p.userCitizenId || "-";
+        }
+        
+        rowData["คำนำหน้า"] = p.userTitle || "-";
+        rowData["ชื่อบุคลากร"] = (p.userFirstName && p.userLastName) ? `${p.userFirstName} ${p.userLastName}` : p.userName;
+        rowData["ระดับ"] = p.userLevel || "-";
+        rowData["ตำแหน่ง"] = p.userPosition || "-";
+        rowData["แผนก"] = p.userDivision || "-";
+        rowData["สังกัด"] = p.userDepartment || "-";
+        rowData["ประเภทบุคลากร"] = p.userEmployeeType || "-";
+        rowData["ปีงบประมาณ"] = p.fiscalYear;
+        rowData["สถานะ"] = p.status;
+        rowData["หมวดหมู่"] = p.devCategory;
+        rowData["หัวข้อการพัฒนา"] = p.devTopic;
+        rowData["70% (ประสบการณ์)"] = p.dev70;
+        rowData["20% (ผู้อื่น)"] = p.dev20;
+        rowData["10% (อบรม)"] = p.dev10;
+        rowData["ผู้กำกับดูแล"] = p.supervisorName || "-";
+        
+        return rowData;
+      });
+      
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "IDP Plans");
+      
+      XLSX.writeFile(workbook, `IDP_Plans_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+    } catch (error) {
+      console.error("Export failed", error);
+    }
   };
 
   return (
@@ -96,6 +142,14 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
                 <SelectItem value="ไม่สำเร็จ">ไม่สำเร็จ</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              onClick={exportToExcel}
+              className="h-12 px-4 rounded-xl border-slate-200 dark:border-purple-900/50 bg-white dark:bg-[#1a0b2e] hidden sm:flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-[#2e1065]"
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
           </div>
         </div>
 
@@ -108,14 +162,13 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap">ผู้ส่งแผน</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden md:table-cell">สังกัด</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden lg:table-cell">ประเภทบุคลากร</TableHead>
-                  <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden xl:table-cell">ผู้กำกับดูแล</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap">สถานะ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {pendingPlans.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
                       ไม่พบข้อมูลแผน IDP
                     </TableCell>
                   </TableRow>
@@ -127,7 +180,7 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
                     className="hover:bg-purple-50/30 dark:hover:bg-purple-900/20 transition-colors border-slate-100 dark:border-purple-900/30 group cursor-pointer"
                   >
                     <TableCell className="px-6 sm:px-8 py-4">
-                      <div className="font-bold text-slate-700 dark:text-purple-100 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all">
+                      <div className="font-bold text-slate-700 dark:text-purple-100 truncate max-w-[80px] sm:max-w-[100px] md:max-w-[120px] lg:max-w-[150px] xl:max-w-[200px] group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all">
                         {plan.courseTitle}
                       </div>
                       <div className="text-xs font-semibold text-purple-600 dark:text-purple-400 mt-1">
@@ -188,18 +241,7 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
                         {plan.userEmployeeType || "-"}
                       </span>
                     </TableCell>
-                    <TableCell className="px-4 hidden xl:table-cell">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          {plan.supervisorName || "-"}
-                        </span>
-                        {plan.supervisorPosition && (
-                          <span className="text-xs text-slate-500 mt-0.5">
-                            {plan.supervisorPosition}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
+
                     <TableCell className="px-4">
                       <Badge
                         variant="outline"

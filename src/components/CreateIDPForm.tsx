@@ -28,8 +28,8 @@ const formSchema = z.object({
   dev70: z.string().min(1, "กรุณาเลือกการเรียนรู้จากประสบการณ์ (70%)"),
   dev20: z.string().min(1, "กรุณาเลือกการเรียนรู้จากผู้อื่น (20%)"),
   dev10: z.string().min(1, "กรุณาเลือกการเรียนรู้จากการฝึกอบรม (10%)"),
-  supervisorName: z.string().min(1, "กรุณากรอกชื่อ-สกุลผู้บังคับบัญชา"),
-  supervisorPosition: z.string().min(1, "กรุณากรอกตำแหน่งผู้บังคับบัญชา"),
+  supervisorName: z.string().min(1, "กรุณากรอกชื่อ-สกุลผู้บังคับบัญชา").max(50, "ชื่อ-สกุลยาวเกินไป (ไม่เกิน 50 ตัวอักษร)"),
+  supervisorPosition: z.string().min(1, "กรุณากรอกตำแหน่งผู้บังคับบัญชา").max(50, "ตำแหน่งยาวเกินไป (ไม่เกิน 50 ตัวอักษร)"),
 });
 
 const getFormSchema = (employeeType?: string | null) => z.object({
@@ -39,8 +39,8 @@ const getFormSchema = (employeeType?: string | null) => z.object({
   dev70: z.string().min(1, "กรุณาเลือกการเรียนรู้จากประสบการณ์ (70%)"),
   dev20: z.string().min(1, "กรุณาเลือกการเรียนรู้จากผู้อื่น (20%)"),
   dev10: z.string().min(1, "กรุณาเลือกการเรียนรู้จากการฝึกอบรม (10%)"),
-  supervisorName: z.string().min(1, "กรุณากรอกชื่อ-สกุลผู้บังคับบัญชา"),
-  supervisorPosition: z.string().min(1, "กรุณากรอกตำแหน่งผู้บังคับบัญชา"),
+  supervisorName: z.string().min(1, "กรุณากรอกชื่อ-สกุลผู้บังคับบัญชา").max(50, "ชื่อ-สกุลยาวเกินไป (ไม่เกิน 50 ตัวอักษร)"),
+  supervisorPosition: z.string().min(1, "กรุณากรอกตำแหน่งผู้บังคับบัญชา").max(50, "ตำแหน่งยาวเกินไป (ไม่เกิน 50 ตัวอักษร)"),
 });
 
 const categoryOptions = {
@@ -673,6 +673,7 @@ export function CreateIDPForm({
                   <div className="relative">
                     <Input
                       {...field}
+                      maxLength={50}
                       onFocus={() => setShowSupervisorDropdown(true)}
                       onBlur={() => setTimeout(() => setShowSupervisorDropdown(false), 200)}
                       onChange={(e) => {
@@ -732,6 +733,7 @@ export function CreateIDPForm({
                 render={({ field }) => (
                   <Input
                     {...field}
+                    maxLength={50}
                     placeholder="กรุณากรอกตำแหน่งผู้บังคับบัญชาเหนือขึ้นไป 1 ระดับ"
                     className={`w-full h-12 px-4 mt-3 bg-white dark:bg-[#150a29] rounded-xl border shadow-sm transition-all md:text-base text-base ${hasSubmitted && errors.supervisorPosition ? "border-destructive ring-1 ring-destructive/50" : "border-slate-100 dark:border-purple-800/50"}`}
                   />

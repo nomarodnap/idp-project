@@ -38,7 +38,40 @@ export async function updateAvatar(url: string) {
 }
 
 export async function getUsers() {
-  return await db.select().from(users).orderBy(users.firstName);
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get("better-auth.session_token")?.value;
+  let currentUserRole: string | null = null;
+  let currentUserDepartment: string | null = null;
+  let currentUserDivision: string | null = null;
+
+  if (sessionToken) {
+    const [sessionRecord] = await db
+      .select({ userId: sessionTable.userId })
+      .from(sessionTable)
+      .where(eq(sessionTable.token, sessionToken));
+    if (sessionRecord) {
+      const [userRecord] = await db
+        .select({ systemRole: users.systemRole, department: users.department, division: users.division })
+        .from(users)
+        .where(eq(users.id, sessionRecord.userId));
+        
+      if (userRecord) {
+        currentUserRole = userRecord.systemRole;
+        currentUserDepartment = userRecord.department;
+        currentUserDivision = userRecord.division;
+      }
+    }
+  }
+
+  let query = db.select().from(users).$dynamic();
+  
+  if (currentUserRole === "Viewer_Department" && currentUserDepartment) {
+    query = query.where(eq(users.department, currentUserDepartment));
+  } else if (currentUserRole === "Viewer_Division" && currentUserDivision) {
+    query = query.where(eq(users.division, currentUserDivision));
+  }
+
+  return await query.orderBy(users.firstName);
 }
 
 export async function updateUserRole(id: string, role: string) {

@@ -28,7 +28,7 @@ export default function RootLayout({
       <body className="h-full min-h-screen bg-muted/20" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
