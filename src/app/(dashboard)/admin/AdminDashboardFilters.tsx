@@ -19,12 +19,13 @@ export default function AdminDashboardFilters({
   // Generate last 5 years up to current year + 1 (in case they are planning for next year early)
   const years = Array.from({ length: 6 }, (_, i) => currentYear + 1 - i);
 
-  const updateFilters = (key: string, value: string) => {
+  const updateFilters = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (value === "ทั้งหมด") {
+    const valStr = value || "";
+    if (valStr === "ทั้งหมด" || valStr === "") {
       params.delete(key);
     } else {
-      params.set(key, value);
+      params.set(key, valStr);
     }
     router.push(`?${params.toString()}`);
   };
