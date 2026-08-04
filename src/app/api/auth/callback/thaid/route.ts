@@ -35,10 +35,29 @@ export async function GET(request: Request) {
     });
 
     const tokenData = thaidResponse.data;
-    const decoded = jwt.decode(tokenData.id_token) as { pid?: string };
+    const decoded = tokenData.id_token ? (jwt.decode(tokenData.id_token) as any) : null;
+    
+    let pid = decoded?.pid;
 
-    const pid = decoded?.pid;
-    if (!pid) throw new Error("ไม่พบ pid ใน id_token");
+    if (!pid && tokenData.pid) {
+      pid = tokenData.pid; // Just in case it's in the root
+    }
+
+    if (!pid) {
+      console.log("ThaID Token Data:", tokenData);
+      console.log("Decoded ID Token:", decoded);
+      
+      // Fallback: Check if it's in the access token
+      const accessDecoded = tokenData.access_token ? (jwt.decode(tokenData.access_token) as any) : null;
+      if (accessDecoded?.pid) {
+        pid = accessDecoded.pid;
+      }
+    }
+
+    if (!pid) {
+      const dbgKeys = Object.keys(tokenData).join(",");
+      throw new Error(`ไม่พบ pid ใน id_token (keys: ${dbgKeys}, decoded: ${JSON.stringify(decoded)})`);
+    }
 
     // 2. Fetch encrypted password from DB
     const [userRecord] = await db.select().from(users).where(eq(users.citizenId, pid));
