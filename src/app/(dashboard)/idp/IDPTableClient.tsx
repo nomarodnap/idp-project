@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
@@ -48,6 +48,35 @@ export default function IDPTableClient({ initialPlans, IDP_PHASE }: { initialPla
   const handleYearChange = (val: string) => {
     setYearFilter(val);
     setCurrentPage(1);
+  };
+
+  const exportToExcel = async () => {
+    try {
+      const XLSX = await import('xlsx');
+      const exportData = filteredPlans.map(p => {
+        return {
+          "รหัสแผน": p.planCode || "IDP-LEGACY",
+          "ชื่อหลักสูตร": p.courseTitle,
+          "ปีงบประมาณ": p.fiscalYear,
+          "สถานะ": p.status,
+          "หมวดหมู่": p.devCategory,
+          "หัวข้อการพัฒนา": p.devTopic,
+          "70% (ประสบการณ์)": p.dev70,
+          "20% (ผู้อื่น)": p.dev20,
+          "10% (อบรม)": p.dev10,
+          "ผู้กำกับดูแล": p.supervisorName || "-",
+          "วันที่ส่งแผน": p.createdAt ? formatThaiDate(p.createdAt) : "-"
+        };
+      });
+      
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "My IDP Plans");
+      
+      XLSX.writeFile(workbook, `My_IDP_Plans_${new Date().toISOString().split('T')[0]}.xlsx`);
+    } catch (error) {
+      console.error("Export failed", error);
+    }
   };
 
   return (
@@ -96,14 +125,20 @@ export default function IDPTableClient({ initialPlans, IDP_PHASE }: { initialPla
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ทั้งหมด">ทั้งหมด</SelectItem>
-                <SelectItem value="แบบร่าง">แบบร่าง</SelectItem>
-                <SelectItem value="รออนุมัติ">รออนุมัติ</SelectItem>
                 <SelectItem value="กำลังดำเนินการ">กำลังดำเนินการ</SelectItem>
                 <SelectItem value="รอประเมินผล">รอประเมินผล</SelectItem>
                 <SelectItem value="สำเร็จ">สำเร็จ</SelectItem>
                 <SelectItem value="ไม่สำเร็จ">ไม่สำเร็จ</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              onClick={exportToExcel}
+              className="h-12 px-4 rounded-xl border-slate-200 dark:border-purple-900/50 bg-white dark:bg-[#1a0b2e] hidden sm:flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-[#2e1065]"
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
           </div>
         </div>
 

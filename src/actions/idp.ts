@@ -181,10 +181,27 @@ export async function createIDPPlan(data: any) {
     return { error: `คุณได้สร้างแผนพัฒนาสำหรับปีงบประมาณ ${currentYear} ครบโควตา 3 แผนแล้ว` };
   }
 
-  // Generate unique planCode: IDP-YY-XXXXXX
+  // Generate unique planCode: IDP-YY-XXXXXX (Running number resetting each year)
   const shortYear = currentYear.toString().slice(-2);
-  const randomStr = crypto.randomBytes(3).toString("hex").toUpperCase();
-  const planCode = `IDP-${shortYear}-${randomStr}`;
+  const prefix = `IDP-${shortYear}-`;
+
+  const allPlansThisYear = await db.select({ planCode: idpPlans.planCode })
+    .from(idpPlans)
+    .where(eq(idpPlans.fiscalYear, currentYear));
+
+  let maxRunningNumber = 0;
+  for (const p of allPlansThisYear) {
+    if (p.planCode?.startsWith(prefix)) {
+      const runningPart = p.planCode.substring(prefix.length);
+      const num = parseInt(runningPart, 10);
+      if (!isNaN(num) && num > maxRunningNumber) {
+        maxRunningNumber = num;
+      }
+    }
+  }
+
+  const nextNumber = maxRunningNumber + 1;
+  const planCode = `${prefix}${nextNumber.toString().padStart(6, '0')}`;
 
   try {
     const [newPlan] = await db.insert(idpPlans).values({

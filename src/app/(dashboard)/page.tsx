@@ -34,6 +34,10 @@ export default async function DashboardPage() {
   const successPercentage = totalEvaluated > 0 ? Math.round((completedCount / totalEvaluated) * 100) : 0;
   const inProgressCount = plans.filter(p => p.status === 'กำลังดำเนินการ').length;
 
+  const evaluatedSubtitle = [
+    completedCount > 0 ? `สำเร็จ ${completedCount}` : "",
+    failedCount > 0 ? `ไม่สำเร็จ ${failedCount}` : ""
+  ].filter(Boolean).join(" • ");
   let phaseInfo = {
     title: "ระบบเปิดให้จัดทำแผน",
     description: "ระบบเปิดให้คุณสามารถสร้าง แก้ไข และลบแผนพัฒนาบุคลากร (IDP) ประจำปีได้ตามปกติ",
@@ -68,7 +72,7 @@ export default async function DashboardPage() {
     { title: "แผนทั้งหมด", value: allCount.toString(), icon: FileText, color: "text-blue-600", subtitle: "แผนพัฒนาสะสมทั้งหมด" },
     { title: "กำลังดำเนินการ", value: inProgressCount.toString(), icon: Loader2, color: "text-amber-500", subtitle: "อยู่ระหว่างพัฒนา" },
     { title: "รอการประเมินผล", value: pendingCount.toString(), icon: Clock, color: "text-orange-500", subtitle: "รอประเมินผลด้วยตนเอง" },
-    { title: "เสร็จสิ้น", value: totalEvaluated.toString(), icon: CheckCircle2, color: "text-emerald-600", subtitle: totalEvaluated > 0 ? `ผ่านเกณฑ์ ${successPercentage}%` : "ยังไม่มีผลประเมิน" },
+    { title: "เสร็จสิ้น", value: totalEvaluated.toString(), icon: CheckCircle2, color: "text-emerald-600", subtitle: totalEvaluated > 0 ? evaluatedSubtitle : "ยังไม่มีผลประเมิน" },
   ];
   return (
     <div className="space-y-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">

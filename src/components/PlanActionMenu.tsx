@@ -46,6 +46,11 @@ export function PlanActionMenu({ planId, currentPhase }: { planId: string; curre
   };
 
   const handleEvaluate = async (result: string) => {
+    const statusText = result === "Success" ? "สำเร็จ (ผ่านเกณฑ์)" : "ไม่สำเร็จ (ไม่ผ่านเกณฑ์)";
+    if (!confirm(`ยืนยันการประเมินผลเป็น "${statusText}" ?\n\nหากบันทึกผลการประเมินแล้ว จะไม่สามารถกลับมาแก้ไขได้อีก`)) {
+      return;
+    }
+
     setIsEvaluating(true);
     try {
       const response = await evaluateIDPPlan(planId, result);
@@ -127,7 +132,7 @@ export function PlanActionMenu({ planId, currentPhase }: { planId: string; curre
               <CheckCircle className="w-6 h-6 mr-3 shrink-0" />
               <div className="text-left">
                 <div className="font-bold text-base">สำเร็จ (ผ่านเกณฑ์)</div>
-                <div className="text-xs font-medium opacity-80 mt-0.5 line-clamp-2">ดำเนินการพัฒนาครบถ้วนและผ่านการประเมินตามที่กำหนด</div>
+                <div className="text-xs font-medium opacity-80 mt-0.5 line-clamp-2">ดำเนินการพัฒนาครบถ้วนตามที่กำหนด</div>
               </div>
             </Button>
 
@@ -139,7 +144,7 @@ export function PlanActionMenu({ planId, currentPhase }: { planId: string; curre
               <XCircle className="w-6 h-6 mr-3 shrink-0" />
               <div className="text-left">
                 <div className="font-bold text-base">ไม่สำเร็จ (ไม่ผ่านเกณฑ์)</div>
-                <div className="text-xs font-medium opacity-80 mt-0.5 line-clamp-2">ไม่สามารถดำเนินการได้ครบถ้วน หรือไม่ผ่านการประเมิน</div>
+                <div className="text-xs font-medium opacity-80 mt-0.5 line-clamp-2">ไม่สามารถดำเนินการได้ครบถ้วน</div>
               </div>
             </Button>
           </div>

@@ -6,7 +6,7 @@ import { getCurrentFiscalYear } from "@/lib/date";
 import AdminDashboardCharts from "./AdminDashboardCharts";
 import AdminDashboard702010 from "./AdminDashboard702010";
 import AdminDashboardSuccessRate from "./AdminDashboardSuccessRate";
-import AdminFiscalYearFilter from "./AdminFiscalYearFilter";
+import AdminDashboardFilters from "./AdminDashboardFilters";
 
 export default async function AdminDashboardPage({
   searchParams,
@@ -19,8 +19,13 @@ export default async function AdminDashboardPage({
   const resolvedParams = await searchParams;
   const currentYear = getCurrentFiscalYear();
   const selectedYear = resolvedParams.year ? parseInt(resolvedParams.year as string) : currentYear;
+  const selectedEmployeeType = (resolvedParams.employeeType as string) || "ทั้งหมด";
 
-  const allPlans = allPlansRaw.filter(p => p.fiscalYear === selectedYear);
+  let allPlans = allPlansRaw.filter(p => p.fiscalYear === selectedYear);
+
+  if (selectedEmployeeType !== "ทั้งหมด") {
+    allPlans = allPlans.filter(p => p.userEmployeeType === selectedEmployeeType);
+  }
 
   const allCount = allPlans.length;
   const pendingApprovalCount = allPlans.filter(p => p.status === 'รออนุมัติ' || p.status === 'Pending').length;
@@ -31,11 +36,16 @@ export default async function AdminDashboardPage({
   const successPercentage = totalEvaluated > 0 ? Math.round((completedCount / totalEvaluated) * 100) : 0;
   const inProgressCount = allPlans.filter(p => p.status === 'กำลังดำเนินการ').length;
 
+  const evaluatedSubtitle = [
+    completedCount > 0 ? `สำเร็จ ${completedCount}` : "",
+    failedCount > 0 ? `ไม่สำเร็จ ${failedCount}` : ""
+  ].filter(Boolean).join(" • ");
+
   const statCards = [
     { title: "แผนทั้งหมด", value: allCount.toString(), icon: FileText, color: "text-blue-600", subtitle: "แผนพัฒนาสะสมทั้งหมด" },
     { title: "กำลังดำเนินการ", value: inProgressCount.toString(), icon: Loader2, color: "text-amber-500", subtitle: "อยู่ระหว่างการพัฒนา" },
     { title: "รอการประเมินผล", value: pendingCount.toString(), icon: Clock, color: "text-orange-500", subtitle: "รอประเมินผล" },
-    { title: "เสร็จสิ้น", value: totalEvaluated.toString(), icon: CheckCircle2, color: "text-emerald-600", subtitle: totalEvaluated > 0 ? `ผ่านเกณฑ์ ${successPercentage}%` : "ยังไม่มีผลประเมิน" },
+    { title: "เสร็จสิ้น", value: totalEvaluated.toString(), icon: CheckCircle2, color: "text-emerald-600", subtitle: totalEvaluated > 0 ? evaluatedSubtitle : "ยังไม่มีผลประเมิน" },
   ];
 
   return (
@@ -46,7 +56,11 @@ export default async function AdminDashboardPage({
           <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">ภาพรวมการจัดทำแผนพัฒนาบุคลากร (IDP) ประจำปี {selectedYear}</p>
         </div>
         
-        <AdminFiscalYearFilter currentYear={currentYear} selectedYear={selectedYear} />
+        <AdminDashboardFilters 
+          currentYear={currentYear} 
+          selectedYear={selectedYear} 
+          selectedEmployeeType={selectedEmployeeType}
+        />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

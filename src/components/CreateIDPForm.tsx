@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -111,6 +111,7 @@ export function CreateIDPForm({
 }) {
   const router = useRouter();
   const { user } = useUser();
+  const formRef = useRef<HTMLFormElement>(null);
   const [step, setStep] = useState(1);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -161,6 +162,13 @@ export function CreateIDPForm({
     name: "devTopic",
   });
 
+  useEffect(() => {
+    if (user?.employeeType === "พนักงานราชการทั่วไป" && !watchCategory) {
+      setValue("devCategory", "สมรรถนะพนักงานราชการทั่วไป", { shouldValidate: true });
+    } else if (user?.employeeType === "ลูกจ้างประจำ" && !watchCategory) {
+      setValue("devCategory", "สมรรถนะลูกจ้างประจำ", { shouldValidate: true });
+    }
+  }, [user?.employeeType, watchCategory, setValue]);
 
   async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
@@ -196,6 +204,7 @@ export function CreateIDPForm({
 
     if (isValid) {
       setStep(2);
+      setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     }
   };
 
@@ -210,6 +219,7 @@ export function CreateIDPForm({
 
     if (isValid) {
       setStep(3);
+      setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     }
   };
 
@@ -224,12 +234,13 @@ export function CreateIDPForm({
   };
 
   return (
-    <form onSubmit={(e) => { setHasSubmitted(true); handleSubmit(onSubmit, onError)(e); }} className="space-y-8">
+    <form ref={formRef} onSubmit={(e) => { setHasSubmitted(true); handleSubmit(onSubmit, onError)(e); }} className="space-y-8">
       {/* หัวข้อใหญ่หลัก */}
       {step === 1 && (
         <div className="space-y-6 bg-slate-50/50 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-purple-800/30 shadow-sm">
           <div className="flex flex-col space-y-8">
             {/* หมวดหมู่หลัก */}
+            {user?.employeeType !== "พนักงานราชการทั่วไป" && user?.employeeType !== "ลูกจ้างประจำ" && (
             <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
               {/* รายละเอียดหมวดหมู่สมรรถนะ */}
               {user?.employeeType === "ข้าราชการพลเรือนสามัญ" && (
@@ -317,6 +328,7 @@ export function CreateIDPForm({
                 )}
               />
             </div>
+            )}
 
             {/* หัวข้อย่อย */}
             {watchCategory && (

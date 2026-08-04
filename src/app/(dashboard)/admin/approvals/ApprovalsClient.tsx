@@ -135,7 +135,6 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ทั้งหมด">ทั้งหมด</SelectItem>
-                <SelectItem value="รออนุมัติ">รออนุมัติ</SelectItem>
                 <SelectItem value="กำลังดำเนินการ">กำลังดำเนินการ</SelectItem>
                 <SelectItem value="รอประเมินผล">รอประเมินผล</SelectItem>
                 <SelectItem value="สำเร็จ">สำเร็จ</SelectItem>
