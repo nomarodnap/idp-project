@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { LoginForm } from "@/components/LoginForm";
 import { Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "เข้าสู่ระบบ - ระบบจัดทำแผนพัฒนารายบุคคล (IDP)",
@@ -103,7 +104,11 @@ export default function LoginPage() {
                 <p className="text-slate-500 dark:text-purple-200/70 font-medium">ลงชื่อเข้าใช้งานด้วยบัญชีผู้ใช้ DPIS ของท่าน</p>
               </div>
 
-              <LoginForm />
+              <div className="mt-8">
+                <Suspense fallback={<div className="h-40 flex items-center justify-center">กำลังโหลด...</div>}>
+                  <LoginForm />
+                </Suspense>
+              </div>
             </div>
           </div>
           

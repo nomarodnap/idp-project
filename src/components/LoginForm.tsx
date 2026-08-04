@@ -3,14 +3,14 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { User, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { loginWithDPIS } from "@/actions/auth";
 
 const loginSchema = z.object({
@@ -28,8 +28,29 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [errorMsg, setErrorMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam) {
+      if (errorParam === "FirstTimeDPISLoginRequired") {
+        setErrorMsg("คุณยังไม่เคยเข้าสู่ระบบด้วย DPIS กรุณาเข้าสู่ระบบด้วย DPIS ในครั้งแรกก่อนเพื่อเชื่อมโยงข้อมูลกับ ThaID");
+      } else {
+        setErrorMsg(`เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วย ThaID (${errorParam})`);
+      }
+    }
+  }, [searchParams]);
+
+  const handleThaIDLogin = () => {
+    // Redirect to ThaID
+    // Make sure we have the client id from env (or hardcode for this client side redirect)
+    const clientId = "YlF0R3J6N2hkeHJPeDZiVTF0OFdPUXVtWUVwd3VyVVU";
+    const redirectUri = encodeURIComponent("https://idp.fisheries.go.th/api/auth/callback/thaid");
+    const thaidUrl = `https://imauth.bora.dopa.go.th/api/v2/oauth2/auth/?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=pid`;
+    window.location.href = thaidUrl;
+  };
 
   const {
     register,
@@ -123,6 +144,27 @@ export function LoginForm() {
         <span className="flex items-center justify-center gap-2">
           {isSubmitting ? "กำลังตรวจสอบข้อมูล..." : "เข้าสู่ระบบ (Login)"}
           {!isSubmitting && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-amber-400" />}
+        </span>
+      </Button>
+
+      <div className="relative my-4">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-200 dark:border-purple-800/50"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-white dark:bg-[#150a29] text-slate-500 font-medium">หรือ</span>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleThaIDLogin}
+        className="w-full h-14 text-lg font-bold transition-all hover:-translate-y-1 bg-white dark:bg-[#1a0b2e] border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 group"
+      >
+        <span className="flex items-center justify-center gap-3">
+          <img src="/thaid.png" alt="ThaID" className="w-6 h-6 object-contain" />
+          เข้าสู่ระบบด้วย ThaID
         </span>
       </Button>
     </form>

@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
+import { encryptPassword } from "@/lib/crypto";
 
 async function getToken() {
   const DOMAIN_SERVER = process.env.DPIS_DOMAIN;
@@ -78,6 +79,7 @@ export async function loginWithDPIS(formData: FormData) {
 
     const pseudoEmail = `${userData.per_cardno}@dpis.local`;
     const fullName = `${userData.pn_name}${userData.per_name} ${userData.per_surname}`;
+    const encryptedPassword = encryptPassword(password);
 
     // Upsert User
     const [user] = await db
@@ -95,6 +97,7 @@ export async function loginWithDPIS(formData: FormData) {
         level: userData.per_level_name,
         department: userData.org_name,
         division: userData.org_name1, // or org_name2 depending on DPIS mapping
+        dpisPassword: encryptedPassword,
       })
       .onConflictDoUpdate({
         target: users.citizenId,
@@ -108,47 +111,51 @@ export async function loginWithDPIS(formData: FormData) {
           level: userData.per_level_name,
           department: userData.org_name,
           division: userData.org_name1,
+          dpisPassword: encryptedPassword,
           updatedAt: new Date(),
         },
       })
       .returning({ id: users.id });
 
-    // Manually create Better-Auth session in Database
-    const sessionToken = generateSessionToken();
-    const sessionId = uuidv4();
-    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 8); // 8 hours
-
-    const headersList = await headers();
-    const userAgent = headersList.get("user-agent") || "";
-    // Note: IP might be tricky depending on proxy, fallback to generic
-    const ipAddress = headersList.get("x-forwarded-for") || "127.0.0.1"; 
-
-    await db.insert(sessionTable).values({
-      id: sessionId,
-      token: sessionToken,
-      userId: user.id,
-      expiresAt,
-      userAgent,
-      ipAddress,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    // Set Cookie for Better Auth
-    const cookieStore = await cookies();
-    cookieStore.set("better-auth.session_token", sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      expires: expiresAt,
-    });
-
+    // Create session
+    await createBetterAuthSession(user.id);
     return { success: true };
   } catch (error) {
     console.error("DPIS Login Error:", error);
     return { error: "เครือข่ายของระบบ DPIS มีปัญหา โปรดลองเข้าใหม่ในภายหลัง" };
   }
+}
+
+export async function createBetterAuthSession(userId: string) {
+  const sessionToken = generateSessionToken();
+  const sessionId = uuidv4();
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 8); // 8 hours
+
+  const headersList = await headers();
+  const userAgent = headersList.get("user-agent") || "";
+  const ipAddress = headersList.get("x-forwarded-for") || "127.0.0.1"; 
+
+  await db.insert(sessionTable).values({
+    id: sessionId,
+    token: sessionToken,
+    userId,
+    expiresAt,
+    userAgent,
+    ipAddress,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  const cookieStore = await cookies();
+  cookieStore.set("better-auth.session_token", sessionToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    expires: expiresAt,
+  });
+
+  return sessionToken;
 }
 
 export async function logout() {

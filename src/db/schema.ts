@@ -23,6 +23,7 @@ export const users = pgTable("users", {
   
   systemRole: varchar("system_role", { length: 50 }).notNull().default('User'), // User, Supervisor, Admin
   supervisorId: uuid("supervisor_id"), // อ้างอิง ID ของหัวหน้างาน
+  dpisPassword: text("dpis_password"), // รหัสผ่านเข้าระบบ DPIS (Encrypted)
 
   createdAt: timestamp("created_at").defaultNow().notNull(), // created_at
   updatedAt: timestamp("updated_at").defaultNow().notNull(), // updated_at
