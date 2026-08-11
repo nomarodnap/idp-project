@@ -18,7 +18,7 @@ export default function IDPTableClient({ initialPlans, IDP_PHASE }: { initialPla
   const [statusFilter, setStatusFilter] = useState("ทั้งหมด");
   const [currentPage, setCurrentPage] = useState(1);
   const [yearFilter, setYearFilter] = useState("ทุกปีงบประมาณ");
-  const itemsPerPage = 10;
+  const itemsPerPage = 25;
   
   const availableYears = Array.from(new Set(initialPlans.map(p => p.fiscalYear).filter(Boolean))).sort((a, b) => (b as number) - (a as number));
 

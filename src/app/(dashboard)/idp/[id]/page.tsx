@@ -185,7 +185,13 @@ export default async function IDPDetail({ params }: { params: Promise<{ id: stri
     <div 
       className="hidden print:block w-full text-black bg-white pt-8 px-12 font-sarabun-it9"
     >
-      <h1 className="text-[22pt] font-bold text-center mb-6 leading-tight">แผนพัฒนารายบุคคล (Individual Development Plan : IDP)</h1>
+      <h1 className="text-[22pt] font-bold text-center mb-1 leading-tight">แผนพัฒนารายบุคคล (Individual Development Plan : IDP)</h1>
+      <div className="text-[18pt] font-bold text-center mb-1 leading-tight">
+        ประจำปีงบประมาณปี พ.ศ. {plan.fiscalYear}
+      </div>
+      <div className="text-[16pt] text-center mb-6 leading-tight">
+        (รหัสแผนพัฒนา {plan.planCode || "-"})
+      </div>
       
       <div className="mb-8 text-[16pt] leading-tight">
         <div className="font-bold underline mb-4 text-center">ข้อมูลผู้ใช้งาน</div>
