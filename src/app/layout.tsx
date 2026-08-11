@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sarabun } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const sarabun = Sarabun({
@@ -34,6 +35,7 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
+        <Toaster />
       </body>
     </html>
   );

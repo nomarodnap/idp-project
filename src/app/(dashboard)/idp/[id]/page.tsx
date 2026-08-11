@@ -10,6 +10,7 @@ import DeletePlanButton from "./DeletePlanButton";
 import { getSystemPhase } from "@/actions/settings";
 import SelfEvaluateButton from "./SelfEvaluateButton";
 import { BackButton } from "@/components/BackButton";
+import PrintPlanButton from "./PrintPlanButton";
 import { cookies } from "next/headers";
 import { db } from "@/db";
 import { session as sessionTable } from "@/db/schema";
@@ -39,10 +40,28 @@ export default async function IDPDetail({ params }: { params: Promise<{ id: stri
     notFound();
   }
 
+  const userPositionText = plan.userEmployeeType === "ข้าราชการพลเรือนสามัญ" && plan.userLevel 
+    ? `${plan.userPosition}${plan.userLevel}` 
+    : (plan.userPosition || "-");
+  
+  const currentDateStr = new Intl.DateTimeFormat('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date());
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <>
+    {/* Preload the font by rendering it invisibly */}
+    <div className="fixed opacity-0 pointer-events-none font-sarabun-it9 text-[1px]" aria-hidden="true">
+      <span className="font-normal">Preload Regular</span>
+      <span className="font-bold">Preload Bold</span>
+      <span className="italic">Preload Italic</span>
+      <span className="font-bold italic">Preload Bold Italic</span>
+    </div>
+    
+    <div className="print:hidden max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between mb-4">
-        <BackButton />
+        <div className="flex items-center gap-2">
+          <BackButton />
+          <PrintPlanButton />
+        </div>
         
         {isOwner && plan.status !== "Approved" && plan.status !== "อนุมัติแล้ว" && plan.status !== "Completed" && plan.status !== "เสร็จสิ้น" && plan.status !== "ไม่สำเร็จ" && plan.status !== "สำเร็จ" && (
           <div className="flex items-center gap-2">
@@ -161,5 +180,75 @@ export default async function IDPDetail({ params }: { params: Promise<{ id: stri
 
       </div>
     </div>
+
+    {/* Printable Format */}
+    <div 
+      className="hidden print:block w-full text-black bg-white pt-8 px-12 font-sarabun-it9"
+    >
+      <h1 className="text-[22pt] font-bold text-center mb-6 leading-tight">แผนพัฒนารายบุคคล (Individual Development Plan : IDP)</h1>
+      
+      <div className="mb-8 text-[16pt] leading-tight">
+        <div className="font-bold underline mb-4 text-center">ข้อมูลผู้ใช้งาน</div>
+        <div className="grid grid-cols-2 gap-x-12 gap-y-2">
+          <div><span className="font-bold">ชื่อ-สกุล:</span> {plan.userName}</div>
+          <div><span className="font-bold">สังกัด/กอง:</span> {plan.userDepartment || "-"}</div>
+          
+          <div><span className="font-bold">ตำแหน่ง/ระดับ:</span> {userPositionText}</div>
+          <div><span className="font-bold">กลุ่ม/ฝ่าย:</span> {plan.userDivision || "-"}</div>
+          
+          <div><span className="font-bold">ประเภท:</span> {plan.userEmployeeType || "-"}</div>
+        </div>
+      </div>
+
+      <div className="mb-12">
+        <div className="font-bold underline mb-4 text-[16pt] leading-tight text-center">รายละเอียดการพัฒนารายบุคคล (IDP)</div>
+        <table className="w-full border-collapse border border-black text-[16pt] leading-tight">
+          <thead>
+            <tr>
+              <th className="border border-black p-2 align-middle text-center" rowSpan={2}>ความรู้/ทักษะ/สมรรถนะ<br/>ที่ต้องการพัฒนา</th>
+              <th className="border border-black p-2 align-middle text-center" rowSpan={2}>หัวข้อที่ต้องการพัฒนา</th>
+              <th className="border border-black p-2 text-center" colSpan={3}>วิธีพัฒนา</th>
+              <th className="border border-black p-2 align-middle text-center" rowSpan={2}>ผลการพัฒนารายบุคคล</th>
+            </tr>
+            <tr>
+              <th className="border border-black p-2 text-center font-normal">70</th>
+              <th className="border border-black p-2 text-center font-normal">20</th>
+              <th className="border border-black p-2 text-center font-normal">10</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="border border-black p-2 align-top">{plan.devTopic}</td>
+              <td className="border border-black p-2 align-top">{plan.courseTitle}</td>
+              <td className="border border-black p-2 align-top">{plan.dev70}</td>
+              <td className="border border-black p-2 align-top">{plan.dev20}</td>
+              <td className="border border-black p-2 align-top">{plan.dev10}</td>
+              <td className="border border-black p-2 align-top text-center">
+                {plan.selfEvaluationResult === 'Success' ? 'สำเร็จ' : plan.selfEvaluationResult === 'Fail' ? 'ไม่สำเร็จ' : 'กำลังดำเนินการ'}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex justify-between items-end mt-20 text-[16pt] px-8 break-inside-avoid leading-tight">
+        <div className="text-center">
+          <div className="mb-8">ผู้ได้รับการพัฒนา</div>
+          <div className="mb-2">_________________________</div>
+          <div className="mb-1">({plan.userName || "................................................"})</div>
+          <div className="mb-2">{userPositionText}</div>
+          <div>วันที่ {currentDateStr}</div>
+        </div>
+
+        <div className="text-center">
+          <div className="mb-8">ผู้บังคับบัญชา (ผู้กำกับดูแลแผน IDP)</div>
+          <div className="mb-2">_________________________</div>
+          <div className="mb-1">({plan.supervisorName || "................................................"})</div>
+          <div className="mb-2">{plan.supervisorPosition || "................................................"}</div>
+          <div>วันที่ {currentDateStr}</div>
+        </div>
+      </div>
+    </div>
+    </>
   );
 }

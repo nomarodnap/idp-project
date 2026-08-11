@@ -13,7 +13,7 @@ const menuItems = [
   { name: "จัดทำแผน IDP", icon: FileEdit, href: "/idp/create" },
   { name: "ประวัติการพัฒนา", icon: History, href: "/idp" },
   { name: "ตรวจสอบแผนลูกทีม", icon: Users, href: "/team-approvals" },
-  { name: "คู่มือการใช้งาน", icon: BookOpen, href: "#" },
+  { name: "คู่มือการใช้งาน", icon: BookOpen, href: "/guide" },
 ];
 
 const adminItems = [

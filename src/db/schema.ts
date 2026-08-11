@@ -124,6 +124,6 @@ export const trainingCourses = pgTable("training_courses", {
 
 export const systemSettings = pgTable("system_settings", {
   key: varchar("key", { length: 100 }).primaryKey(),
-  value: varchar("value", { length: 255 }).notNull(),
+  value: text("value").notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

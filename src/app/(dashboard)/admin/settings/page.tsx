@@ -1,5 +1,7 @@
 import { getSystemPhase } from "@/actions/settings";
+import { getAnnouncements } from "@/actions/announcements";
 import SettingsForm from "./SettingsForm";
+import AnnouncementManager from "./AnnouncementManager";
 import { ShieldAlert } from "lucide-react";
 import { db } from "@/db";
 import { users, session as sessionTable } from "@/db/schema";
@@ -39,29 +41,20 @@ export default async function AdminSettingsPage() {
     );
   }
 
-  // TODO: Add back Admin check when role system is ready
-  // if (user.systemRole !== "Admin") {
-  //   return (
-  //     <div className="flex flex-col items-center justify-center h-full py-20 text-slate-500">
-  //       <ShieldAlert className="w-16 h-16 text-rose-500 mb-4" />
-  //       <h2 className="text-2xl font-bold text-slate-800 dark:text-white">ไม่มีสิทธิ์เข้าถึง</h2>
-  //       <p>เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถตั้งค่าระบบได้</p>
-  //     </div>
-  //   );
-  // }
-
   const currentPhase = await getSystemPhase();
+  const announcements = await getAnnouncements();
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-[#2e1065] dark:text-purple-50 tracking-tight">ตั้งค่าระบบ (Phase)</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">จัดการช่วงเวลา (Time Phase) สำหรับการจัดทำแผนพัฒนาบุคลากร</p>
+          <h1 className="text-3xl font-black text-[#2e1065] dark:text-purple-50 tracking-tight">ตั้งค่าระบบ</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">จัดการตั้งค่าต่างๆ ของระบบ</p>
         </div>
       </div>
 
       <SettingsForm currentPhase={currentPhase} />
+      <AnnouncementManager initialAnnouncements={announcements} />
     </div>
   );
 }

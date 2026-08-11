@@ -57,6 +57,13 @@
       "when": 1785231071461,
       "tag": "0007_groovy_trauma",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786419260711,
+      "tag": "0008_complete_weapon_omega",
+      "breakpoints": true
     }
   ]
 }

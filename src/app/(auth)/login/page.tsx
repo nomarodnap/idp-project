@@ -54,7 +54,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="pt-6 mt-4 border-t border-purple-100/50 dark:border-purple-900/50">
+          <div className="pt-6 mt-4 border-t border-purple-100/50 dark:border-purple-900/50 space-y-6">
             <div className="flex items-center gap-5 bg-white/40 dark:bg-[#1a0b2e]/50 backdrop-blur-sm rounded-2xl p-4 border border-white/60 dark:border-purple-800/30 shadow-sm w-fit">
               {/* DPIS Logo */}
               <div className="bg-white dark:bg-white/10 rounded-xl p-2 shadow-sm border border-slate-100 dark:border-amber-500/30 transition-transform hover:scale-105 shrink-0">
@@ -67,6 +67,15 @@ export default function LoginPage() {
                 </div>
                 <span className="text-slate-600 dark:text-purple-100 font-medium text-sm">เชื่อมต่อข้อมูลบุคลากรอัตโนมัติผ่าน <span className="text-[#2e1065] dark:text-white font-extrabold">DPIS 6</span></span>
               </div>
+            </div>
+            
+            <div className="text-sm text-slate-600 dark:text-purple-200/60 font-medium space-y-2 text-center w-full max-w-md">
+              <p>
+                ติดต่อสอบถามเกี่ยวกับระบบจัดทำแผนพัฒนาฯ <br/> ที่กลุ่มแผนและติดตามประเมินผล กบค. <br/> โทร. 025620600 หรือ ภายใน 17510 และ 17513
+              </p>
+              <p>
+                &copy; {new Date().getFullYear()} กรมประมง (Department of Fisheries).
+              </p>
             </div>
           </div>
         </div>
@@ -101,7 +110,7 @@ export default function LoginPage() {
 
               <div className="hidden lg:block mb-8">
                 <h2 className="text-3xl font-black text-[#2e1065] dark:text-white mb-2">เข้าสู่ระบบ</h2>
-                <p className="text-slate-500 dark:text-purple-200/70 font-medium">ลงชื่อเข้าใช้งานด้วยบัญชีผู้ใช้ DPIS ของท่าน</p>
+                <p className="text-red-500 font-medium">ลงชื่อเข้าใช้งานด้วยบัญชีผู้ใช้ DPIS ของท่าน</p>
               </div>
 
               <div className="mt-8">
@@ -109,11 +118,18 @@ export default function LoginPage() {
                   <LoginForm />
                 </Suspense>
               </div>
+
+              {/* Forgot Password Instructions */}
+              <div className="mt-8 pt-6 border-t border-slate-100 dark:border-purple-900/50 text-sm text-slate-500 dark:text-purple-200/70 space-y-2 text-center">
+                <p className="font-bold text-red-500">***กรณีลืมรหัสผ่าน***</p>
+                <p>
+                  สามารถแก้ไขรหัสผ่านได้ในระบบ DPIS โดยเลือก "ลืมรหัสผ่าน" แล้วกรอกอีเมลกรมประมงที่ท่านใช้สมัครไว้
+                </p>
+                <p>
+                  หากท่านลืมอีเมลกรมประมงของท่าน ให้ติดต่อที่ <br/> ศูนย์เทคโนโลยีสารสนเทศฯ โทร. 029405602 ต่อ 4040<br/> 
+                </p>
+              </div>
             </div>
-          </div>
-          
-          <div className="mt-8 text-center text-sm text-slate-500 font-medium">
-            &copy; {new Date().getFullYear()} กรมประมง (Department of Fisheries).
           </div>
         </div>
 

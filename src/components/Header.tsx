@@ -75,30 +75,6 @@ export function Header({ currentPhase = 1 }: { currentPhase?: number }) {
         {/* Theme Toggle */}
         <ThemeToggle />
 
-        {/* Notification Bell */}
-        <Popover>
-          <PopoverTrigger render={
-            <Button variant="ghost" size="icon" className="relative hover:bg-purple-50 dark:hover:bg-purple-900/40">
-              <Bell className="w-5 h-5 text-slate-500 dark:text-slate-400" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-amber-500 rounded-full border-2 border-white dark:border-[#150a29]"></span>
-            </Button>
-          } />
-          <PopoverContent className="w-80 p-4 rounded-2xl shadow-xl border-slate-100 dark:border-purple-900/50 mr-4 mt-2 bg-white dark:bg-[#1a0b2e]" align="end">
-            <h4 className="font-bold text-[#2e1065] dark:text-purple-100 mb-3 border-b border-slate-100 dark:border-purple-900/30 pb-2">การแจ้งเตือนระบบ</h4>
-            <div className={`p-3 rounded-xl border border-slate-100 dark:border-purple-900/30 ${notification.bg}`}>
-              <div className="flex items-start gap-3">
-                <div className={`mt-0.5 ${notification.color}`}>
-                  <Bell className="w-5 h-5" />
-                </div>
-                <div>
-                  <h5 className={`text-sm font-bold ${notification.color}`}>{notification.title}</h5>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">{notification.desc}</p>
-                </div>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-
         {/* Profile */}
         <div className="flex items-center gap-3 pl-2 sm:pl-4 border-l border-slate-200 dark:border-purple-900/50">
           <div className="hidden md:flex flex-col text-right">

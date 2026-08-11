@@ -18,7 +18,7 @@ export default function TeamApprovalsClient({ initialPlans }: { initialPlans: an
   const [statusFilter, setStatusFilter] = useState("ทั้งหมด");
   const [currentPage, setCurrentPage] = useState(1);
   const [yearFilter, setYearFilter] = useState("ทุกปีงบประมาณ");
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(25);
   
   const availableYears = Array.from(new Set(initialPlans.map(p => p.fiscalYear).filter(Boolean))).sort((a, b) => (b as number) - (a as number));
 
@@ -57,18 +57,22 @@ export default function TeamApprovalsClient({ initialPlans }: { initialPlans: an
       const exportData = pendingPlans.map(p => {
         return {
           "รหัสแผน": p.planCode || "IDP-LEGACY",
-          "ชื่อหลักสูตร": p.courseTitle,
-          "ชื่อผู้ส่ง": p.userName || "-",
-          "สังกัด": p.userDepartment || "-",
-          "ประเภทบุคลากร": p.userEmployeeType || "-",
           "ปีงบประมาณ": p.fiscalYear,
-          "สถานะ": p.status,
+          "ประเภทบุคลากร": p.userEmployeeType || "-",
+          "คำนำหน้า": p.userTitle || "-",
+          "ชื่อบุคลากร": (p.userFirstName && p.userLastName) ? `${p.userFirstName} ${p.userLastName}` : (p.userName || "-"),
+          "ตำแหน่ง": p.userPosition || "-",
+          "ระดับ": p.userLevel || "-",
+          "สังกัด": p.userDepartment || "-",
+          "แผนก": p.userDivision || "-",
+          "ชื่อหลักสูตร": p.courseTitle,
           "หมวดหมู่": p.devCategory,
           "หัวข้อการพัฒนา": p.devTopic,
           "70% (ประสบการณ์)": p.dev70,
           "20% (ผู้อื่น)": p.dev20,
           "10% (อบรม)": p.dev10,
-          "วันที่ส่งแผน": p.createdAt ? formatThaiDate(p.createdAt) : "-"
+          "สถานะ": p.status,
+          "ผู้กำกับดูแล": p.supervisorName || "-"
         };
       });
       
@@ -142,10 +146,10 @@ export default function TeamApprovalsClient({ initialPlans }: { initialPlans: an
             <Table>
               <TableHeader className="bg-slate-50/50 dark:bg-purple-950/30">
                 <TableRow className="hover:bg-transparent border-slate-100 dark:border-purple-900/50">
-                  <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 h-14 px-6 sm:px-8 whitespace-nowrap">แผนงาน / หลักสูตร</TableHead>
+                  <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 h-14 px-6 sm:px-8 whitespace-nowrap">ชื่อหลักสูตร / รหัสแผน</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap">ผู้ส่งแผน</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden md:table-cell">สังกัด</TableHead>
-                  <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden lg:table-cell">ประเภทบุคลากร</TableHead>
+                  <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden lg:table-cell">หัวข้อการพัฒนา / สัดส่วน</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap">สถานะ</TableHead>
                 </TableRow>
               </TableHeader>
@@ -198,6 +202,11 @@ export default function TeamApprovalsClient({ initialPlans }: { initialPlans: an
                           <span className="text-sm font-bold text-[#4c1d95] dark:text-purple-300">
                             {plan.userName || "ไม่ระบุ"}
                           </span>
+                          {plan.userEmployeeType && (
+                            <span className="text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 px-1.5 py-0.5 rounded w-fit mt-1">
+                              {plan.userEmployeeType}
+                            </span>
+                          )}
                           {plan.userPosition && (
                             <span className="text-xs text-slate-500 mt-0.5">
                               {plan.userEmployeeType === "ข้าราชการพลเรือนสามัญ" && plan.userLevel
@@ -220,10 +229,24 @@ export default function TeamApprovalsClient({ initialPlans }: { initialPlans: an
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="px-4 hidden lg:table-cell">
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                        {plan.userEmployeeType || "-"}
-                      </span>
+                    
+                    <TableCell className="px-4 hidden lg:table-cell max-w-[200px]">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate" title={plan.devTopic}>
+                          {plan.devTopic || "-"}
+                        </span>
+                        <div className="flex flex-col gap-1 mt-2">
+                          <span className="text-[10px] font-medium bg-purple-50 text-purple-600 border border-purple-100 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800/50 px-1.5 py-0.5 rounded truncate min-w-0" title={`70%: ${plan.dev70}`}>
+                            <span className="font-bold mr-1">70</span>{plan.dev70}
+                          </span>
+                          <span className="text-[10px] font-medium bg-blue-50 text-blue-600 border border-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800/50 px-1.5 py-0.5 rounded truncate min-w-0" title={`20%: ${plan.dev20}`}>
+                            <span className="font-bold mr-1">20</span>{plan.dev20}
+                          </span>
+                          <span className="text-[10px] font-medium bg-amber-50 text-amber-600 border border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50 px-1.5 py-0.5 rounded truncate min-w-0" title={`10%: ${plan.dev10}`}>
+                            <span className="font-bold mr-1">10</span>{plan.dev10}
+                          </span>
+                        </div>
+                      </div>
                     </TableCell>
 
                     <TableCell className="px-4">
@@ -248,30 +271,53 @@ export default function TeamApprovalsClient({ initialPlans }: { initialPlans: an
         </CardContent>
       </Card>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white dark:bg-[#1a0b2e] p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-purple-900/50">
-          <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            แสดงหน้า {currentPage} จาก {totalPages} (ทั้งหมด {pendingPlans.length} รายการ)
+      {pendingPlans.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-[#1a0b2e] p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-purple-900/50">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-slate-500">แสดง</span>
+              <Select value={itemsPerPage.toString()} onValueChange={(val) => { setItemsPerPage(Number(val)); setCurrentPage(1); }}>
+                <SelectTrigger className="w-[80px] h-9 rounded-xl border-slate-200 dark:border-purple-800">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="150">150</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm font-medium text-slate-500">รายการ/หน้า</span>
+            </div>
+            <div className="text-sm font-medium text-slate-500 dark:text-slate-400 hidden sm:block border-l border-slate-200 dark:border-purple-900/50 pl-4">
+              แสดงหน้า {currentPage} จาก {Math.max(1, totalPages)} (ทั้งหมด {pendingPlans.length} รายการ)
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="rounded-xl border-slate-200 dark:border-purple-800 text-slate-700 dark:text-purple-300"
-            >
-              ก่อนหน้า
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              className="rounded-xl border-slate-200 dark:border-purple-800 text-slate-700 dark:text-purple-300"
-            >
-              ถัดไป
-            </Button>
+          
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="text-sm font-medium text-slate-500 dark:text-slate-400 sm:hidden">
+              หน้า {currentPage}/{Math.max(1, totalPages)}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="rounded-xl border-slate-200 dark:border-purple-800 text-slate-700 dark:text-purple-300"
+              >
+                ก่อนหน้า
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="rounded-xl border-slate-200 dark:border-purple-800 text-slate-700 dark:text-purple-300"
+              >
+                ถัดไป
+              </Button>
+            </div>
           </div>
         </div>
       )}

@@ -481,7 +481,7 @@ export function CreateIDPForm({
                         htmlFor="dev70-3"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300 leading-relaxed"
                       >
-                        เรียนรู้ด้วยตนเอง
+                        การเรียนรู้ด้วยตนเองจากเอกสาร คู่มือ หรือ Youtube เป็นต้น
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
@@ -494,7 +494,7 @@ export function CreateIDPForm({
                         htmlFor="dev70-4"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        ติดตามสังเกตงาน
+                        ติดตาม/สังเกตงาน
                       </Label>
                     </div>
                   </RadioGroup>
@@ -539,7 +539,7 @@ export function CreateIDPForm({
                         htmlFor="dev20-1"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        ปรึกษาแนะนำ
+                        ให้คำปรึกษาแนะนำ
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
@@ -565,7 +565,7 @@ export function CreateIDPForm({
                         htmlFor="dev20-3"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        รับข้อมูลป้อนกลับ
+                        ให้ข้อมูลป้อนกลับ
                       </Label>
                     </div>
                   </RadioGroup>
@@ -610,7 +610,7 @@ export function CreateIDPForm({
                         htmlFor="dev10-1"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300 leading-relaxed"
                       >
-                        ฝึกอบรม/เรียนรู้ผ่านสื่อ
+                        ฝึกอบรมในห้องเรียนทุกรูปแบบ/เรียนรู้ผ่านระบบ E-learning
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
@@ -623,7 +623,7 @@ export function CreateIDPForm({
                         htmlFor="dev10-2"
                         className="text-base font-normal cursor-pointer text-slate-700 dark:text-slate-300"
                       >
-                        ประชุม/สัมมนา
+                        ประชุม/สัมมนา (เชิงปฏิบัติการและวิชาการ)
                       </Label>
                     </div>
                     <div className="flex items-start space-x-3">
