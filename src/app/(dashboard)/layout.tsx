@@ -7,6 +7,7 @@ import { users, session as sessionTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getSystemPhase } from "@/actions/settings";
 import AnnouncementPopup from "@/components/AnnouncementPopup";
+import { AutoLogout } from "@/components/AutoLogout";
 
 export default async function DashboardLayout({
   children,
@@ -58,6 +59,7 @@ export default async function DashboardLayout({
         </div>
       </div>
       <AnnouncementPopup />
+      <AutoLogout />
     </UserProvider>
   );
 }
