@@ -25,53 +25,32 @@ export default function AnnouncementManager({ initialAnnouncements }: Props) {
       return;
     }
 
+    const maxSizeBytes = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSizeBytes) {
+      toast.error("ขนาดไฟล์รูปภาพต้องไม่เกิน 10MB");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        // Resize logic (max 800px width/height)
-        const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
-        const maxDim = 800;
+      const base64Data = e.target?.result as string;
+      if (!base64Data) return;
 
-        if (width > height) {
-          if (width > maxDim) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          }
+      startTransition(async () => {
+        const result = await saveAnnouncement(index, base64Data);
+        if (result.success) {
+          const newAnnouncements = [...announcements];
+          newAnnouncements[index] = base64Data;
+          setAnnouncements(newAnnouncements);
+          toast.success(`อัปโหลดรูปภาพที่ ${index + 1} สำเร็จ`);
         } else {
-          if (height > maxDim) {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
+          toast.error(result.error || "เกิดข้อผิดพลาดในการอัปโหลด");
         }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const base64Data = canvas.toDataURL("image/webp", 0.8);
-
-          startTransition(async () => {
-            const result = await saveAnnouncement(index, base64Data);
-            if (result.success) {
-              const newAnnouncements = [...announcements];
-              newAnnouncements[index] = base64Data;
-              setAnnouncements(newAnnouncements);
-              toast.success(`อัปโหลดรูปภาพที่ ${index + 1} สำเร็จ`);
-            } else {
-              toast.error(result.error || "เกิดข้อผิดพลาดในการอัปโหลด");
-            }
-            // Reset input
-            if (fileInputRefs.current[index]) {
-              fileInputRefs.current[index]!.value = "";
-            }
-          });
+        // Reset input
+        if (fileInputRefs.current[index]) {
+          fileInputRefs.current[index]!.value = "";
         }
-      };
-      img.src = e.target?.result as string;
+      });
     };
     reader.readAsDataURL(file);
   };
