@@ -21,7 +21,7 @@ const adminItems = [
   { name: "รายงานแผน IDP", icon: CheckSquare, href: "/admin/approvals", exact: false },
   { name: "จัดการบุคลากร", icon: Users, href: "/admin/users", exact: false },
   // { name: "จัดการข้อมูลพื้นฐาน", icon: Database, href: "/admin/master-data", exact: false }, // Hidden for now
-  { name: "ตั้งค่าระบบ (Phase)", icon: Settings, href: "/admin/settings", exact: false },
+  { name: "ตั้งค่าระบบ", icon: Settings, href: "/admin/settings", exact: false },
 ];
 
 export function Sidebar({ currentPhase = 1 }: { currentPhase?: number }) {
@@ -101,7 +101,7 @@ export function Sidebar({ currentPhase = 1 }: { currentPhase?: number }) {
             {!isCollapsed && <h3 className="px-4 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Management</h3>}
             <nav className="space-y-1">
               {adminItems
-                .filter(item => isSuperAdmin || item.name !== "ตั้งค่าระบบ (Phase)")
+                .filter(item => isSuperAdmin || item.name !== "ตั้งค่าระบบ")
                 .map((item) => {
                 const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
                 return (

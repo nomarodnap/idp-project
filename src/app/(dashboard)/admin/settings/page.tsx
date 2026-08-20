@@ -1,7 +1,9 @@
 import { getSystemPhase } from "@/actions/settings";
 import { getAnnouncements } from "@/actions/announcements";
+import { getSystemMetrics } from "@/actions/monitoring";
 import SettingsForm from "./SettingsForm";
 import AnnouncementManager from "./AnnouncementManager";
+import SystemHealthMonitor from "./SystemHealthMonitor";
 import { ShieldAlert } from "lucide-react";
 import { db } from "@/db";
 import { users, session as sessionTable } from "@/db/schema";
@@ -43,16 +45,18 @@ export default async function AdminSettingsPage() {
 
   const currentPhase = await getSystemPhase();
   const announcements = await getAnnouncements();
+  const metricsResult = await getSystemMetrics();
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-[#2e1065] dark:text-purple-50 tracking-tight">ตั้งค่าระบบ</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">จัดการตั้งค่าต่างๆ ของระบบ</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">จัดการตั้งค่าและติดตามสถานะของระบบ</p>
         </div>
       </div>
 
+      <SystemHealthMonitor initialMetrics={metricsResult.data} />
       <SettingsForm currentPhase={currentPhase} />
       <AnnouncementManager initialAnnouncements={announcements} />
     </div>
