@@ -151,8 +151,8 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
             <Table>
               <TableHeader className="bg-slate-50/50 dark:bg-purple-950/30">
                 <TableRow className="hover:bg-transparent border-slate-100 dark:border-purple-900/50">
-                  <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 h-14 px-6 sm:px-8 whitespace-nowrap">ชื่อหลักสูตร / รหัสแผน</TableHead>
-                  <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap">ผู้ส่งแผน</TableHead>
+                  <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 h-14 px-6 sm:px-8 whitespace-nowrap">ผู้ส่งแผน</TableHead>
+                  <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap">ชื่อหลักสูตร / รหัสแผน</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden md:table-cell">สังกัด</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden lg:table-cell">หัวข้อการพัฒนา / สัดส่วน</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap">สถานะ</TableHead>
@@ -173,22 +173,6 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
                     className="hover:bg-purple-50/30 dark:hover:bg-purple-900/20 transition-colors border-slate-100 dark:border-purple-900/30 group cursor-pointer"
                   >
                     <TableCell className="px-6 sm:px-8 py-4">
-                      <div className="font-bold text-slate-700 dark:text-purple-100 truncate max-w-[80px] sm:max-w-[100px] md:max-w-[120px] lg:max-w-[150px] xl:max-w-[200px] group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all">
-                        {plan.courseTitle}
-                      </div>
-                      <div className="text-xs font-semibold text-purple-600 dark:text-purple-400 mt-1">
-                        {plan.planCode || "IDP-LEGACY"}
-                      </div>
-                      <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                        <Clock className="w-3 h-3" />
-                        {plan.updatedAt && new Date(plan.updatedAt).getTime() !== new Date(plan.createdAt).getTime() ? (
-                          <>แก้ไขเมื่อ: {formatThaiDate(plan.updatedAt)}</>
-                        ) : (
-                          <>ส่งเมื่อ: {formatThaiDate(plan.createdAt)}</>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-purple-800 bg-slate-100 dark:bg-purple-900/50 flex items-center justify-center">
                           {plan.userAvatarUrl || plan.userImage ? (
@@ -220,6 +204,22 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
                             </span>
                           )}
                         </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4">
+                      <div className="font-bold text-slate-700 dark:text-purple-100 truncate max-w-[80px] sm:max-w-[100px] md:max-w-[120px] lg:max-w-[150px] xl:max-w-[200px] group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all">
+                        {plan.courseTitle}
+                      </div>
+                      <div className="text-xs font-semibold text-purple-600 dark:text-purple-400 mt-1">
+                        {plan.planCode || "IDP-LEGACY"}
+                      </div>
+                      <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                        <Clock className="w-3 h-3" />
+                        {plan.updatedAt && new Date(plan.updatedAt).getTime() !== new Date(plan.createdAt).getTime() ? (
+                          <>แก้ไขเมื่อ: {formatThaiDate(plan.updatedAt)}</>
+                        ) : (
+                          <>ส่งเมื่อ: {formatThaiDate(plan.createdAt)}</>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="px-4 hidden md:table-cell">
