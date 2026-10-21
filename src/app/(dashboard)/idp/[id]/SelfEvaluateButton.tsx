@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { evaluateIDPPlan } from "@/actions/idp";
-import { Loader2, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, AlertTriangle, RotateCcw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,9 +17,10 @@ import { useRouter } from "next/navigation";
 interface SelfEvaluateButtonProps {
   planId: string;
   initialStatus: string | null;
+  isAdmin?: boolean;
 }
 
-export default function SelfEvaluateButton({ planId, initialStatus }: SelfEvaluateButtonProps) {
+export default function SelfEvaluateButton({ planId, initialStatus, isAdmin = false }: SelfEvaluateButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [confirmResult, setConfirmResult] = useState<string | null>(null);
@@ -66,14 +67,22 @@ export default function SelfEvaluateButton({ planId, initialStatus }: SelfEvalua
           ) : (
             <CheckCircle className="w-4 h-4 mr-2" />
           )}
-          {initialStatus ? `ประเมินผลแล้ว: ${initialStatus === "Success" ? "สำเร็จ" : "ไม่สำเร็จ"}` : "ประเมินผล (ด้วยตัวเอง)"}
+          {initialStatus 
+            ? (isAdmin 
+                ? `ผลประเมิน: ${initialStatus === "Success" ? "สำเร็จ" : "ไม่สำเร็จ"} (แก้ไขโดย Admin)` 
+                : `ประเมินผลแล้ว: ${initialStatus === "Success" ? "สำเร็จ" : "ไม่สำเร็จ"}`)
+            : (isAdmin ? "ประเมินผล (Admin)" : "ประเมินผล (ด้วยตัวเอง)")}
         </Button>
       } />
-      <DialogContent className="sm:max-w-[425px] bg-white dark:bg-[#1a0b2e] border-slate-100 dark:border-purple-800/50 rounded-3xl">
+      <DialogContent className="sm:max-w-[440px] bg-white dark:bg-[#1a0b2e] border-slate-100 dark:border-purple-800/50 rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black text-[#2e1065] dark:text-purple-50">ประเมินผลการพัฒนา</DialogTitle>
+          <DialogTitle className="text-2xl font-black text-[#2e1065] dark:text-purple-50">
+            {isAdmin ? "ประเมินผลการพัฒนา (สิทธิ์ Admin)" : "ประเมินผลการพัฒนา"}
+          </DialogTitle>
           <DialogDescription className="text-slate-500 dark:text-slate-400">
-            กรุณาประเมินผลการดำเนินการตามแผนพัฒนาบุคลากรรายบุคคล (IDP) นี้ ว่าท่านดำเนินการสำเร็จหรือไม่
+            {isAdmin 
+              ? "ในฐานะผู้ดูแลระบบ คุณสามารถกำหนด ปรับปรุง หรือรีเซ็ตผลการประเมินแผนพัฒนานี้ได้"
+              : "กรุณาประเมินผลการดำเนินการตามแผนพัฒนาบุคลากรรายบุคคล (IDP) นี้ ว่าท่านดำเนินการสำเร็จหรือไม่"}
           </DialogDescription>
         </DialogHeader>
         
@@ -83,11 +92,17 @@ export default function SelfEvaluateButton({ planId, initialStatus }: SelfEvalua
               <AlertTriangle className="w-12 h-12 text-amber-500" />
               <div>
                 <h4 className="text-lg font-bold text-amber-700 dark:text-amber-400 mb-2">
-                  ยืนยันการประเมินผล
+                  {confirmResult === "Reset" ? "ยืนยันการรีเซ็ตผลประเมิน" : "ยืนยันการประเมินผล"}
                 </h4>
                 <p className="text-sm text-amber-600 dark:text-amber-500">
-                  คุณต้องการประเมินผลแผนพัฒนานี้เป็น <strong className="text-lg text-amber-800 dark:text-amber-300">"{confirmResult === 'Success' ? 'สำเร็จ' : 'ไม่สำเร็จ'}"</strong> ใช่หรือไม่?<br/><br/>
-                  <span className="font-bold underline">หมายเหตุ:</span> หากกดยืนยันแล้วจะไม่สามารถกลับมาแก้ไขได้อีก
+                  {confirmResult === "Reset" ? (
+                    <>คุณต้องการรีเซ็ตผลการประเมินแผนพัฒนานี้กลับเป็น <strong className="text-lg text-amber-800 dark:text-amber-300">"ยังไม่ประเมินผล"</strong> ใช่หรือไม่?</>
+                  ) : (
+                    <>
+                      คุณต้องการประเมินผลแผนพัฒนานี้เป็น <strong className="text-lg text-amber-800 dark:text-amber-300">"{confirmResult === 'Success' ? 'สำเร็จ' : 'ไม่สำเร็จ'}"</strong> ใช่หรือไม่?<br/><br/>
+                      <span className="font-bold underline">หมายเหตุ:</span> {isAdmin ? "ในฐานะ Admin คุณสามารถเข้ามาแก้ไขผลการประเมินนี้ได้ตลอดเวลา" : "หากกดยืนยันแล้วจะไม่สามารถกลับมาแก้ไขได้อีก"}
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -106,17 +121,19 @@ export default function SelfEvaluateButton({ planId, initialStatus }: SelfEvalua
                 className={`flex-1 h-12 rounded-xl font-bold text-white shadow-sm ${
                   confirmResult === 'Success' 
                     ? 'bg-emerald-600 hover:bg-emerald-700' 
+                    : confirmResult === 'Reset'
+                    ? 'bg-amber-600 hover:bg-amber-700'
                     : 'bg-rose-600 hover:bg-rose-700'
                 }`}
                 disabled={isEvaluating}
               >
                 {isEvaluating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
-                ยืนยันการประเมิน
+                {confirmResult === "Reset" ? "ยืนยันการรีเซ็ต" : "ยืนยันการประเมิน"}
               </Button>
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-4 py-6">
+          <div className="flex flex-col gap-3 py-6">
             <Button 
               onClick={() => setConfirmResult("Success")} 
               disabled={isEvaluating}
@@ -134,6 +151,17 @@ export default function SelfEvaluateButton({ planId, initialStatus }: SelfEvalua
               <XCircle className="w-6 h-6 mr-2" />
               ไม่สำเร็จ / ยังไม่บรรลุเป้าหมาย
             </Button>
+            {isAdmin && initialStatus && (
+              <Button 
+                onClick={() => setConfirmResult("Reset")} 
+                disabled={isEvaluating}
+                variant="ghost"
+                className="h-11 rounded-xl font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-sm mt-1"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                รีเซ็ตผลการประเมิน (ล้างผลประเมิน)
+              </Button>
+            )}
           </div>
         )}
       </DialogContent>

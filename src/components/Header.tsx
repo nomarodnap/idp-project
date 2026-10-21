@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useUser } from "@/components/UserProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { formatUserPosition } from "@/lib/user";
 
 export function Header({ currentPhase = 1 }: { currentPhase?: number }) {
   const { avatarUrl, user } = useUser();
@@ -82,11 +83,7 @@ export function Header({ currentPhase = 1 }: { currentPhase?: number }) {
               {user?.name || "ผู้ใช้งานระบบ"}
             </span>
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-none">
-              {user 
-                ? (user.employeeType === "ข้าราชการพลเรือนสามัญ" 
-                    ? `${user.position || ""}${user.level || ""}`
-                    : user.position || "บุคลากร")
-                : "บุคลากร"}
+              {formatUserPosition(user?.position, user?.level, user?.employeeType, { fallback: "บุคลากร" })}
             </span>
           </div>
           <Link href="/profile">

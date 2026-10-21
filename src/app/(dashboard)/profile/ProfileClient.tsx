@@ -3,6 +3,7 @@
 import { useUser } from "@/components/UserProvider";
 import { User, Mail, Briefcase, Camera, Check, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatUserPosition } from "@/lib/user";
 import { updateAvatar } from "@/actions/user";
 import { useTransition, useRef } from "react";
 
@@ -124,9 +125,7 @@ export default function ProfileClient({ user }: { user: any }) {
             
             <h2 className="text-lg font-bold text-[#2e1065] dark:text-purple-100">{user.name}</h2>
             <p className="text-sm text-slate-500 dark:text-purple-200/70 font-medium mb-6">
-              {user.employeeType === "ข้าราชการพลเรือนสามัญ" 
-                ? `${user.position || ""}${user.level || ""}`
-                : user.position || "-"}
+              {formatUserPosition(user.position, user.level, user.employeeType)}
             </p>
 
             <div className="w-full">
@@ -195,9 +194,7 @@ export default function ProfileClient({ user }: { user: any }) {
                 <label className="text-sm font-bold text-slate-700 dark:text-purple-200">ตำแหน่ง</label>
                 <div className="h-11 px-4 bg-slate-50 dark:bg-[#1a0b2e] border border-slate-200 dark:border-purple-900/50 rounded-xl flex items-center text-slate-700 dark:text-slate-300 font-medium gap-2">
                   <Briefcase className="w-4 h-4 text-slate-400" />
-                  {user.employeeType === "ข้าราชการพลเรือนสามัญ" 
-                    ? `${user.position || ""}${user.level || ""}`
-                    : user.position || "-"}
+                  {formatUserPosition(user.position, user.level, user.employeeType)}
                 </div>
               </div>
 

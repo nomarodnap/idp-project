@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getIDPPlanById } from "@/actions/idp";
 import { formatThaiDate } from "@/lib/date";
+import { formatUserPosition } from "@/lib/user";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import { BackButton } from "@/components/BackButton";
 import PrintPlanButton from "./PrintPlanButton";
 import { cookies } from "next/headers";
 import { db } from "@/db";
-import { session as sessionTable } from "@/db/schema";
+import { users, session as sessionTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export default async function IDPDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -22,6 +23,7 @@ export default async function IDPDetail({ params }: { params: Promise<{ id: stri
   const IDP_PHASE = await getSystemPhase();
 
   let currentUserId: string | null = null;
+  let currentUserRole: string | null = null;
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("better-auth.session_token")?.value;
   if (sessionToken) {
@@ -31,18 +33,26 @@ export default async function IDPDetail({ params }: { params: Promise<{ id: stri
       .where(eq(sessionTable.token, sessionToken));
     if (sessionRecord) {
       currentUserId = sessionRecord.userId;
+
+      const [userRecord] = await db
+        .select({ systemRole: users.systemRole })
+        .from(users)
+        .where(eq(users.id, currentUserId));
+      if (userRecord) {
+        currentUserRole = userRecord.systemRole;
+      }
     }
   }
 
   const isOwner = currentUserId === plan?.userId;
+  const isSuperAdmin = currentUserRole === "Super Admin";
+  const isAdmin = currentUserRole === "Admin" || isSuperAdmin;
 
   if (!plan) {
     notFound();
   }
 
-  const userPositionText = plan.userEmployeeType === "ข้าราชการพลเรือนสามัญ" && plan.userLevel 
-    ? `${plan.userPosition}${plan.userLevel}` 
-    : (plan.userPosition || "-");
+  const userPositionText = formatUserPosition(plan.userPosition, plan.userLevel, plan.userEmployeeType);
   
   const currentDateStr = new Intl.DateTimeFormat('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date());
 
@@ -57,16 +67,33 @@ export default async function IDPDetail({ params }: { params: Promise<{ id: stri
     </div>
     
     <div className="print:hidden max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-2">
           <BackButton />
           <PrintPlanButton />
         </div>
         
-        {isOwner && plan.status !== "Approved" && plan.status !== "อนุมัติแล้ว" && plan.status !== "Completed" && plan.status !== "เสร็จสิ้น" && plan.status !== "ไม่สำเร็จ" && plan.status !== "สำเร็จ" && (
-          <div className="flex items-center gap-2">
-            {IDP_PHASE === 1 && <DeletePlanButton planId={plan.id} />}
-            {(IDP_PHASE === 1 || IDP_PHASE === 2) && (
+        {/* Admin Actions: Full permissions to manage any IDP plan */}
+        {isAdmin && (
+          <div className="flex flex-wrap items-center gap-2">
+            <DeletePlanButton planId={plan.id} redirectUrl={!isOwner ? "/admin/approvals" : "/idp"} />
+            <Link href={`/idp/${plan.id}/edit`}>
+              <Button variant="outline" className="text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 font-bold rounded-xl shadow-sm">
+                <FileText className="w-4 h-4 mr-2" />
+                แก้ไขแผนพัฒนา {isOwner ? "" : "(Admin)"}
+              </Button>
+            </Link>
+            <SelfEvaluateButton planId={plan.id} initialStatus={plan.selfEvaluationResult} isAdmin={true} />
+          </div>
+        )}
+
+        {/* Regular Owner Actions */}
+        {!isAdmin && isOwner && (
+          <div className="flex flex-wrap items-center gap-2">
+            {IDP_PHASE === 1 && plan.status !== "Approved" && plan.status !== "อนุมัติแล้ว" && plan.status !== "Completed" && plan.status !== "เสร็จสิ้น" && plan.status !== "ไม่สำเร็จ" && plan.status !== "สำเร็จ" && (
+              <DeletePlanButton planId={plan.id} />
+            )}
+            {(IDP_PHASE === 1 || IDP_PHASE === 2) && plan.status !== "Approved" && plan.status !== "อนุมัติแล้ว" && plan.status !== "Completed" && plan.status !== "เสร็จสิ้น" && plan.status !== "ไม่สำเร็จ" && plan.status !== "สำเร็จ" && (
               <Link href={`/idp/${plan.id}/edit`}>
                 <Button variant="outline" className="text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 font-bold rounded-xl shadow-sm">
                   <FileText className="w-4 h-4 mr-2" />
@@ -74,7 +101,9 @@ export default async function IDPDetail({ params }: { params: Promise<{ id: stri
                 </Button>
               </Link>
             )}
-            {IDP_PHASE === 4 && <SelfEvaluateButton planId={plan.id} initialStatus={plan.selfEvaluationResult} />}
+            {IDP_PHASE === 4 && plan.status !== "ไม่สำเร็จ" && plan.status !== "สำเร็จ" && (
+              <SelfEvaluateButton planId={plan.id} initialStatus={plan.selfEvaluationResult} />
+            )}
           </div>
         )}
       </div>
@@ -84,6 +113,7 @@ export default async function IDPDetail({ params }: { params: Promise<{ id: stri
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b-2 border-purple-100 dark:border-purple-800/50 pb-6">
           <div>
+            <div className="flex flex-wrap items-center gap-2">
               <Badge 
                 variant="outline" 
                 className={`text-sm font-bold px-4 py-1.5 rounded-full border shadow-sm
@@ -96,6 +126,16 @@ export default async function IDPDetail({ params }: { params: Promise<{ id: stri
               >
                 {plan.status}
               </Badge>
+              {isAdmin && !isOwner && (
+                <Badge variant="outline" className={`text-xs font-bold px-3 py-1 rounded-full border shadow-sm ${
+                  isSuperAdmin
+                    ? "border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
+                    : "border-purple-200 bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800"
+                }`}>
+                  {isSuperAdmin ? "จัดการในฐานะ Super Admin" : "จัดการในฐานะ Admin"}
+                </Badge>
+              )}
+            </div>
             <h1 className="text-2xl sm:text-3xl font-black text-[#2e1065] dark:text-purple-50 tracking-tight leading-snug mt-4">
               {plan.courseTitle}
             </h1>
@@ -116,7 +156,7 @@ export default async function IDPDetail({ params }: { params: Promise<{ id: stri
                   <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-slate-400"/> แก้ไขล่าสุดเมื่อ {formatThaiDate(plan.updatedAt)}</span>
                 )}
               </div>
-              <span className="flex items-center gap-1.5"><User className="w-4 h-4 text-purple-400"/> ผู้ส่งแผน: {plan.userName || "-"} {plan.userPosition && `(${plan.userEmployeeType === "ข้าราชการพลเรือนสามัญ" && plan.userLevel ? plan.userPosition + plan.userLevel : plan.userPosition})`}</span>
+              <span className="flex items-center gap-1.5"><User className="w-4 h-4 text-purple-400"/> ผู้ส่งแผน: {plan.userName || "-"} {plan.userPosition && `(${userPositionText})`}</span>
               <span className="flex items-center gap-1.5"><User className="w-4 h-4 text-purple-400"/> ผู้กำกับดูแล: {plan.supervisorName} {plan.supervisorPosition ? `(${plan.supervisorPosition})` : ''}</span>
             </div>
           </div>

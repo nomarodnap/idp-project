@@ -66,4 +66,7 @@ You are an expert Senior Full-Stack Developer specializing in the modern React a
 - **Database Storage:** Save the resulting Base64 string directly into PostgreSQL `text` columns. This ensures simple database migrations and portability without external storage dependencies.
 
 ### 12. Displaying User Position
-- **Position Display Logic:** When displaying a user's position in the UI, always check their `employeeType`. If `employeeType === "ข้าราชการพลเรือนสามัญ"`, display both `position` and `level` (e.g., `position + level`). For any other employee type, display ONLY the `position`.
+- **Position Display Logic:** When displaying a user's position in the UI, always check their `employeeType`. If `employeeType === "ข้าราชการพลเรือนสามัญ"`:
+  - If `position` starts with `"ผู้อำนวยการเฉพาะด้าน"`, display ONLY the `position` (do not append `level`).
+  - Otherwise, display both `position` and `level` (e.g., `position + level`).
+  For any other employee type, display ONLY the `position`. Always use `formatUserPosition` from `@/lib/user`.

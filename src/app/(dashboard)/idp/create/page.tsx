@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { getSystemPhase } from "@/actions/settings";
 import { getIDPPlans } from "@/actions/idp";
 import { getUsers } from "@/actions/user";
+import { formatUserPosition } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { getCurrentFiscalYear } from "@/lib/date";
 
@@ -27,7 +28,7 @@ export default async function CreateIDPPage() {
     id: u.id,
     name: `${u.firstName} ${u.lastName}`,
     fullName: `${u.title || ''}${u.firstName} ${u.lastName}`.trim(),
-    position: u.employeeType === "ข้าราชการพลเรือนสามัญ" && u.level ? `${u.position}${u.level}` : u.position
+    position: formatUserPosition(u.position, u.level, u.employeeType, { fallback: "" }),
   }));
 
   return (

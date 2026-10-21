@@ -4,13 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, Search, Clock, MessageSquareText, Download } from "lucide-react";
+import { CheckCircle2, XCircle, Search, Clock, MessageSquareText, Download, FileEdit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatThaiDate } from "@/lib/date";
+import { formatUserPosition } from "@/lib/user";
 import { useUser } from "@/components/UserProvider";
 
 export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] }) {
@@ -22,7 +23,7 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
   const [itemsPerPage, setItemsPerPage] = useState(25);
   
   const { user } = useUser();
-  const isAdmin = user?.systemRole === "Admin";
+  const isAdmin = user?.systemRole === "Admin" || user?.systemRole === "Super Admin";
   
   const availableYears = Array.from(new Set(initialPlans.map(p => p.fiscalYear).filter(Boolean))).sort((a, b) => (b as number) - (a as number));
 
@@ -156,12 +157,15 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden md:table-cell">สังกัด</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden lg:table-cell">หัวข้อการพัฒนา / สัดส่วน</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap">สถานะ</TableHead>
+                  {isAdmin && (
+                    <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap text-right">จัดการ</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {pendingPlans.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-8 text-slate-500">
                       ไม่พบข้อมูลแผน IDP
                     </TableCell>
                   </TableRow>
@@ -198,9 +202,7 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
                           )}
                           {plan.userPosition && (
                             <span className="text-xs text-slate-500 mt-0.5">
-                              {plan.userEmployeeType === "ข้าราชการพลเรือนสามัญ" && plan.userLevel
-                                ? `${plan.userPosition}${plan.userLevel}`
-                                : plan.userPosition}
+                              {formatUserPosition(plan.userPosition, plan.userLevel, plan.userEmployeeType)}
                             </span>
                           )}
                         </div>
@@ -268,6 +270,21 @@ export default function ApprovalsClient({ initialPlans }: { initialPlans: any[] 
                         {plan.status}
                       </Badge>
                     </TableCell>
+                    {isAdmin && (
+                      <TableCell className="px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <Link href={`/idp/${plan.id}/edit`}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-2.5 text-xs font-bold text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/40 rounded-lg shadow-xs"
+                            title="แก้ไขแผนพัฒนา"
+                          >
+                            <FileEdit className="w-3.5 h-3.5 mr-1" />
+                            แก้ไข
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

@@ -28,9 +28,10 @@ export function Sidebar({ currentPhase = 1 }: { currentPhase?: number }) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useUser();
-  const isSuperAdmin = user?.systemRole === "Admin";
+  const isSuperAdmin = user?.systemRole === "Super Admin";
+  const isAdmin = user?.systemRole === "Admin" || isSuperAdmin;
   const isViewer = user?.systemRole === "Viewer_All" || user?.systemRole === "Viewer_Department" || user?.systemRole === "Viewer_Division";
-  const canViewManagement = isSuperAdmin || isViewer;
+  const canViewManagement = isAdmin || isViewer;
 
   return (
     <aside className={cn(

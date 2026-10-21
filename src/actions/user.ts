@@ -75,8 +75,34 @@ export async function getUsers() {
 }
 
 export async function updateUserRole(id: string, role: string) {
-  await db.update(users).set({ systemRole: role }).where(eq(users.id, id));
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get("better-auth.session_token")?.value;
+
+  if (!sessionToken) {
+    return { error: "Unauthorized" };
+  }
+
+  const [sessionRecord] = await db
+    .select({ userId: sessionTable.userId })
+    .from(sessionTable)
+    .where(eq(sessionTable.token, sessionToken));
+
+  if (!sessionRecord) {
+    return { error: "Unauthorized" };
+  }
+
+  const [currentUser] = await db
+    .select({ systemRole: users.systemRole })
+    .from(users)
+    .where(eq(users.id, sessionRecord.userId));
+
+  if (!currentUser || currentUser.systemRole !== "Super Admin") {
+    return { error: "Unauthorized: มีเพียง Super Admin เท่านั้นที่สามารถปรับเปลี่ยน Role ได้" };
+  }
+
+  await db.update(users).set({ systemRole: role, updatedAt: new Date() }).where(eq(users.id, id));
   revalidatePath("/admin/users");
+  return { success: true };
 }
 
 export async function updateUserSupervisor(id: string, supervisorId: string) {

@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useState, useTransition } from "react";
 import { updateUserRole } from "@/actions/user";
 import { useUser } from "@/components/UserProvider";
+import { formatUserPosition } from "@/lib/user";
 
 type UserType = {
   id: string;
@@ -33,11 +34,14 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
   const [roleFilter, setRoleFilter] = useState("ทั้งหมด");
   const [isPending, startTransition] = useTransition();
   const { user } = useUser();
-  const isViewer = user?.systemRole?.startsWith("Viewer");
+  const isSuperAdmin = user?.systemRole === "Super Admin";
 
   const handleRoleChange = (userId: string, newRole: string) => {
     startTransition(async () => {
-      await updateUserRole(userId, newRole);
+      const res = await updateUserRole(userId, newRole);
+      if (res?.error) {
+        alert(res.error);
+      }
     });
   };
 
@@ -92,8 +96,10 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ทั้งหมด">ทั้งหมด</SelectItem>
-                <SelectItem value="User">User</SelectItem>
+                <SelectItem value="Super Admin">Super Admin</SelectItem>
                 <SelectItem value="Admin">Admin</SelectItem>
+                <SelectItem value="Supervisor">Supervisor</SelectItem>
+                <SelectItem value="User">User</SelectItem>
                 <SelectItem value="Viewer_All">Viewer_All</SelectItem>
                 <SelectItem value="Viewer_Department">Viewer_Department</SelectItem>
                 <SelectItem value="Viewer_Division">Viewer_Division</SelectItem>
@@ -111,7 +117,9 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden md:table-cell">สังกัด / ฝ่าย</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap hidden lg:table-cell">ประเภทบุคลากร</TableHead>
                   <TableHead className="font-bold text-[#2e1065] dark:text-purple-200 px-4 whitespace-nowrap">สิทธิ์ในระบบ</TableHead>
-                  {!isViewer && <TableHead className="text-right font-bold text-[#2e1065] dark:text-purple-200 px-6 sm:px-8 whitespace-nowrap">จัดการ</TableHead>}
+                  {isSuperAdmin && (
+                    <TableHead className="text-right font-bold text-[#2e1065] dark:text-purple-200 px-6 sm:px-8 whitespace-nowrap">จัดการสิทธิ์</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -135,9 +143,7 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
                         <div className="flex flex-col">
                           <div className="font-bold text-slate-700 dark:text-purple-100">{user.name}</div>
                           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            {user.employeeType === "ข้าราชการพลเรือนสามัญ" && user.level
-                              ? `${user.position}${user.level}`
-                              : user.position || "-"}
+                            {formatUserPosition(user.position, user.level, user.employeeType)}
                           </div>
                         </div>
                       </div>
@@ -155,31 +161,40 @@ export default function UserTableClient({ initialUsers }: { initialUsers: UserTy
                       <Badge
                         variant="outline"
                         className={`font-bold px-3 py-1 rounded-full border shadow-sm whitespace-nowrap
+                          ${user.systemRole === "Super Admin" ? "bg-amber-50 text-amber-600 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800" : ""}
                           ${user.systemRole === "Admin" ? "bg-red-50 text-red-600 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800" : ""}
                           ${user.systemRole === "Supervisor" ? "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800" : ""}
                           ${user.systemRole === "User" ? "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700" : ""}
+                          ${user.systemRole?.startsWith("Viewer") ? "bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800" : ""}
                         `}
                       >
                         {user.systemRole}
                       </Badge>
                     </TableCell>
-                    {!isViewer && (
+                    {isSuperAdmin && (
                       <TableCell className="text-right px-6 sm:px-8">
                         <div className="flex justify-end gap-2">
                         <DropdownMenu>
-                          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-xl" title="แก้ไขสิทธิ์" disabled={isPending} />}>
+                          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-xl" title="แก้ไขสิทธิ์ (Super Admin)" disabled={isPending} />}>
                             <ShieldAlert className="h-4 w-4" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-lg border-slate-100 dark:border-purple-800 bg-white dark:bg-[#1a0b2e]">
+                          <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border-slate-100 dark:border-purple-800 bg-white dark:bg-[#1a0b2e]">
                             <DropdownMenuGroup>
-                              <DropdownMenuLabel className="font-bold text-[#2e1065] dark:text-purple-200">แก้ไขสิทธิ์</DropdownMenuLabel>
+                              <DropdownMenuLabel className="font-bold text-[#2e1065] dark:text-purple-200">แก้ไขสิทธิ์ (Super Admin)</DropdownMenuLabel>
                               <DropdownMenuSeparator className="bg-slate-100 dark:bg-purple-900/50" />
-                              <DropdownMenuItem className="cursor-pointer" onClick={() => handleRoleChange(user.id, "User")}>
-                                User
+                              <DropdownMenuItem className="cursor-pointer font-bold text-amber-600 dark:text-amber-400" onClick={() => handleRoleChange(user.id, "Super Admin")}>
+                                Super Admin
                               </DropdownMenuItem>
                               <DropdownMenuItem className="cursor-pointer" onClick={() => handleRoleChange(user.id, "Admin")}>
                                 Admin
                               </DropdownMenuItem>
+                              <DropdownMenuItem className="cursor-pointer" onClick={() => handleRoleChange(user.id, "Supervisor")}>
+                                Supervisor
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="cursor-pointer" onClick={() => handleRoleChange(user.id, "User")}>
+                                User
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator className="bg-slate-100 dark:bg-purple-900/50" />
                               <DropdownMenuItem className="cursor-pointer" onClick={() => handleRoleChange(user.id, "Viewer_All")}>
                                 Viewer_All
                               </DropdownMenuItem>

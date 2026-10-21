@@ -11,6 +11,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatThaiDate } from "@/lib/date";
+import { formatUserPosition } from "@/lib/user";
 
 export default function TeamApprovalsClient({ initialPlans }: { initialPlans: any[] }) {
   const router = useRouter();
@@ -193,9 +194,7 @@ export default function TeamApprovalsClient({ initialPlans }: { initialPlans: an
                           )}
                           {plan.userPosition && (
                             <span className="text-xs text-slate-500 mt-0.5">
-                              {plan.userEmployeeType === "ข้าราชการพลเรือนสามัญ" && plan.userLevel
-                                ? `${plan.userPosition}${plan.userLevel}`
-                                : plan.userPosition}
+                              {formatUserPosition(plan.userPosition, plan.userLevel, plan.userEmployeeType)}
                             </span>
                           )}
                         </div>

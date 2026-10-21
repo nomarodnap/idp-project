@@ -21,7 +21,7 @@ export const users = pgTable("users", {
   division: varchar("division", { length: 255 }), // กลุ่ม/ฝ่าย
   avatarUrl: text("avatar_url"), // ลิงก์รูปภาพ หรือ Base64 Image
   
-  systemRole: varchar("system_role", { length: 50 }).notNull().default('User'), // User, Supervisor, Admin
+  systemRole: varchar("system_role", { length: 50 }).notNull().default('User'), // User, Supervisor, Admin, Super Admin
   supervisorId: uuid("supervisor_id"), // อ้างอิง ID ของหัวหน้างาน
   dpisPassword: text("dpis_password"), // รหัสผ่านเข้าระบบ DPIS (Encrypted)
 

@@ -9,6 +9,7 @@ import crypto from "crypto";
 import { getSystemPhase } from "@/actions/settings";
 import { getDerivedPlanStatus } from "@/lib/idp";
 import { getCurrentFiscalYear } from "@/lib/date";
+import { formatUserPosition } from "@/lib/user";
 
 export async function getIDPPlans(options?: { fetchAll?: boolean, statusFilter?: string }) {
   const cookieStore = await cookies();
@@ -230,20 +231,46 @@ export async function createIDPPlan(data: any) {
   }
 }
 
-export async function updateIDPPlan(id: string, data: any) {
+async function getAuthContext() {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("better-auth.session_token")?.value;
-
-  if (!sessionToken) {
-    return { error: "Unauthorized" };
-  }
+  if (!sessionToken) return null;
 
   const [sessionRecord] = await db
-    .select()
+    .select({ userId: sessionTable.userId })
     .from(sessionTable)
     .where(eq(sessionTable.token, sessionToken));
 
-  if (!sessionRecord) {
+  if (!sessionRecord) return null;
+
+  const [userRecord] = await db
+    .select({
+      id: users.id,
+      systemRole: users.systemRole,
+      department: users.department,
+      division: users.division,
+      employeeType: users.employeeType,
+    })
+    .from(users)
+    .where(eq(users.id, sessionRecord.userId));
+
+  if (!userRecord) return null;
+
+  return {
+    userId: sessionRecord.userId,
+    user: userRecord,
+    isAdmin: userRecord.systemRole === "Admin" || userRecord.systemRole === "Super Admin",
+    isSuperAdmin: userRecord.systemRole === "Super Admin",
+    systemRole: userRecord.systemRole,
+    department: userRecord.department,
+    division: userRecord.division,
+  };
+}
+
+export async function updateIDPPlan(id: string, data: any) {
+  const auth = await getAuthContext();
+
+  if (!auth) {
     return { error: "Unauthorized" };
   }
 
@@ -253,22 +280,31 @@ export async function updateIDPPlan(id: string, data: any) {
       return { error: "Plan not found" };
     }
 
-    if (existingPlan.userId !== sessionRecord.userId) {
-      return { error: "Unauthorized" };
-    }
+    if (!auth.isAdmin) {
+      if (existingPlan.userId !== auth.userId) {
+        return { error: "Unauthorized" };
+      }
 
-    const IDP_PHASE = await getSystemPhase();
-    if (IDP_PHASE > 2) {
-      return { error: "The system is not currently open for editing plans." };
-    }
+      const IDP_PHASE = await getSystemPhase();
+      if (IDP_PHASE > 2) {
+        return { error: "The system is not currently open for editing plans." };
+      }
 
-    if (existingPlan.fiscalYear !== getCurrentFiscalYear()) {
-      return { error: "Cannot edit plans from previous fiscal years." };
-    }
+      if (existingPlan.fiscalYear !== getCurrentFiscalYear()) {
+        return { error: "Cannot edit plans from previous fiscal years." };
+      }
 
-    // Only allow edit if not approved/completed
-    if (existingPlan.status === "Approved" || existingPlan.status === "อนุมัติแล้ว" || existingPlan.status === "Completed" || existingPlan.status === "เสร็จสิ้น") {
-      return { error: "Cannot edit an approved plan" };
+      // Only allow edit if not approved/completed/evaluated
+      if (
+        existingPlan.status === "Approved" ||
+        existingPlan.status === "อนุมัติแล้ว" ||
+        existingPlan.status === "Completed" ||
+        existingPlan.status === "เสร็จสิ้น" ||
+        existingPlan.status === "สำเร็จ" ||
+        existingPlan.status === "ไม่สำเร็จ"
+      ) {
+        return { error: "Cannot edit an approved or evaluated plan" };
+      }
     }
 
     await db.update(idpPlans).set({
@@ -280,7 +316,7 @@ export async function updateIDPPlan(id: string, data: any) {
       dev10: data.dev10,
       supervisorName: data.supervisorName,
       supervisorPosition: data.supervisorPosition,
-      status: "Pending", // Reset status back to pending after edit
+      ...(auth.isAdmin ? {} : { status: "Pending" }),
       updatedAt: new Date(),
     }).where(eq(idpPlans.id, id));
 
@@ -297,50 +333,42 @@ export async function updateIDPPlan(id: string, data: any) {
 }
 
 export async function deleteIDPPlan(id: string) {
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("better-auth.session_token")?.value;
+  const auth = await getAuthContext();
 
-  if (!sessionToken) {
+  if (!auth) {
     return { error: "Unauthorized" };
-  }
-
-  const [sessionRecord] = await db
-    .select()
-    .from(sessionTable)
-    .where(eq(sessionTable.token, sessionToken));
-
-  if (!sessionRecord) {
-    return { error: "Unauthorized" };
-  }
-
-  const IDP_PHASE = await getSystemPhase();
-  if (IDP_PHASE !== 1) {
-    return { error: "The system is not currently open for deleting plans." };
   }
 
   try {
-    // Only allow deletion if user owns the plan
+    // Only allow deletion if user owns the plan or is admin
     const [existingPlan] = await db
-      .select({ id: idpPlans.id, fiscalYear: idpPlans.fiscalYear })
+      .select({ id: idpPlans.id, fiscalYear: idpPlans.fiscalYear, userId: idpPlans.userId })
       .from(idpPlans)
-      .where(
-        and(
-          eq(idpPlans.id, id),
-          eq(idpPlans.userId, sessionRecord.userId)
-        )
-      );
+      .where(eq(idpPlans.id, id));
 
     if (!existingPlan) {
-      return { error: "Plan not found or unauthorized to delete" };
+      return { error: "Plan not found" };
     }
 
-    if (existingPlan.fiscalYear !== getCurrentFiscalYear()) {
-      return { error: "Cannot delete plans from previous fiscal years." };
+    if (!auth.isAdmin) {
+      const IDP_PHASE = await getSystemPhase();
+      if (IDP_PHASE !== 1) {
+        return { error: "The system is not currently open for deleting plans." };
+      }
+
+      if (existingPlan.userId !== auth.userId) {
+        return { error: "Unauthorized to delete this plan" };
+      }
+
+      if (existingPlan.fiscalYear !== getCurrentFiscalYear()) {
+        return { error: "Cannot delete plans from previous fiscal years." };
+      }
     }
 
     await db.delete(idpPlans).where(eq(idpPlans.id, id));
 
     revalidatePath("/idp");
+    revalidatePath("/admin/approvals");
     revalidatePath("/");
     
     return { success: true };
@@ -350,26 +378,11 @@ export async function deleteIDPPlan(id: string) {
   }
 }
 
-export async function evaluateIDPPlan(id: string, result: string) {
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("better-auth.session_token")?.value;
+export async function evaluateIDPPlan(id: string, result: string | null) {
+  const auth = await getAuthContext();
 
-  if (!sessionToken) {
+  if (!auth) {
     return { error: "Unauthorized" };
-  }
-
-  const [sessionRecord] = await db
-    .select()
-    .from(sessionTable)
-    .where(eq(sessionTable.token, sessionToken));
-
-  if (!sessionRecord) {
-    return { error: "Unauthorized" };
-  }
-
-  const IDP_PHASE = await getSystemPhase();
-  if (IDP_PHASE !== 4) {
-    return { error: "The system is not currently open for evaluation." };
   }
 
   try {
@@ -378,21 +391,33 @@ export async function evaluateIDPPlan(id: string, result: string) {
       return { error: "Plan not found" };
     }
 
-    if (existingPlan.userId !== sessionRecord.userId) {
-      return { error: "Unauthorized" };
+    if (!auth.isAdmin) {
+      const IDP_PHASE = await getSystemPhase();
+      if (IDP_PHASE !== 4) {
+        return { error: "The system is not currently open for evaluation." };
+      }
+
+      if (existingPlan.userId !== auth.userId) {
+        return { error: "Unauthorized" };
+      }
+
+      if (existingPlan.fiscalYear !== getCurrentFiscalYear()) {
+        return { error: "Cannot evaluate plans from previous fiscal years." };
+      }
     }
 
-    if (existingPlan.fiscalYear !== getCurrentFiscalYear()) {
-      return { error: "Cannot evaluate plans from previous fiscal years." };
-    }
+    const evaluationValue = (result === "Reset" || result === "" || result === null) ? null : result;
 
     await db.update(idpPlans).set({
-      selfEvaluationResult: result,
+      selfEvaluationResult: evaluationValue,
       updatedAt: new Date(),
     }).where(eq(idpPlans.id, id));
 
     revalidatePath("/idp");
     revalidatePath(`/idp/${id}`);
+    revalidatePath("/admin/approvals");
+    revalidatePath("/admin");
+    revalidatePath("/");
     
     return { success: true };
   } catch (error: any) {
@@ -434,9 +459,7 @@ export async function getPlansForSupervisor() {
     return [];
   }
 
-  const expectedSupervisorPosition = currentUser.employeeType === "ข้าราชการพลเรือนสามัญ" && currentUser.level 
-    ? `${currentUser.position || ""}${currentUser.level}`
-    : currentUser.position || "";
+  const expectedSupervisorPosition = formatUserPosition(currentUser.position, currentUser.level, currentUser.employeeType, { fallback: "" });
 
   const plans = await db.select({
     id: idpPlans.id,

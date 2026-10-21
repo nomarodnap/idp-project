@@ -117,20 +117,20 @@ export function CreateIDPForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSupervisorDropdown, setShowSupervisorDropdown] = useState(false);
 
+  const targetEmployeeType = initialData?.userEmployeeType || user?.employeeType;
+
   const availableCategories = Object.keys(categoryOptions).filter((cat) => {
-    if (user?.employeeType === "ข้าราชการพลเรือนสามัญ") {
+    if (targetEmployeeType === "ข้าราชการพลเรือนสามัญ") {
       return cat !== "สมรรถนะพนักงานราชการทั่วไป" && cat !== "สมรรถนะลูกจ้างประจำ";
     }
-    if (user?.employeeType === "พนักงานราชการทั่วไป") {
+    if (targetEmployeeType === "พนักงานราชการทั่วไป") {
       return cat === "สมรรถนะพนักงานราชการทั่วไป";
     }
-    if (user?.employeeType === "ลูกจ้างประจำ") {
+    if (targetEmployeeType === "ลูกจ้างประจำ") {
       return cat === "สมรรถนะลูกจ้างประจำ";
     }
     return true; // Default
   });
-
-
 
   const {
     control,
@@ -140,7 +140,7 @@ export function CreateIDPForm({
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(getFormSchema(user?.employeeType)) as any,
+    resolver: zodResolver(getFormSchema(targetEmployeeType)) as any,
     defaultValues: {
       devCategory: initialData?.devCategory || "",
       devTopic: initialData?.devTopic || "",
@@ -163,12 +163,12 @@ export function CreateIDPForm({
   });
 
   useEffect(() => {
-    if (user?.employeeType === "พนักงานราชการทั่วไป" && !watchCategory) {
+    if (targetEmployeeType === "พนักงานราชการทั่วไป" && !watchCategory) {
       setValue("devCategory", "สมรรถนะพนักงานราชการทั่วไป", { shouldValidate: true });
-    } else if (user?.employeeType === "ลูกจ้างประจำ" && !watchCategory) {
+    } else if (targetEmployeeType === "ลูกจ้างประจำ" && !watchCategory) {
       setValue("devCategory", "สมรรถนะลูกจ้างประจำ", { shouldValidate: true });
     }
-  }, [user?.employeeType, watchCategory, setValue]);
+  }, [targetEmployeeType, watchCategory, setValue]);
 
   async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
@@ -184,7 +184,11 @@ export function CreateIDPForm({
         alert("Error: " + result.error);
         setIsSubmitting(false);
       } else {
-        router.push("/idp"); // redirect to idp list
+        if (planId) {
+          router.push(`/idp/${planId}`);
+        } else {
+          router.push("/idp");
+        }
       }
     } catch (error) {
       console.error(error);
@@ -240,10 +244,10 @@ export function CreateIDPForm({
         <div className="space-y-6 bg-slate-50/50 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-purple-800/30 shadow-sm">
           <div className="flex flex-col space-y-8">
             {/* หมวดหมู่หลัก */}
-            {user?.employeeType !== "พนักงานราชการทั่วไป" && user?.employeeType !== "ลูกจ้างประจำ" && (
+            {targetEmployeeType !== "พนักงานราชการทั่วไป" && targetEmployeeType !== "ลูกจ้างประจำ" && (
             <div className="bg-white dark:bg-[#1a0b2e] p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-all space-y-4">
               {/* รายละเอียดหมวดหมู่สมรรถนะ */}
-              {user?.employeeType === "ข้าราชการพลเรือนสามัญ" && (
+              {targetEmployeeType === "ข้าราชการพลเรือนสามัญ" && (
                 <details className="mb-6 group bg-purple-50/50 dark:bg-purple-900/20 rounded-2xl border border-purple-100 dark:border-purple-800/50 animate-in fade-in slide-in-from-top-4 duration-500">
                   <summary className="flex items-center justify-between p-5 sm:p-6 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
                     <div className="flex items-center gap-2.5">
@@ -293,7 +297,7 @@ export function CreateIDPForm({
                   className="text-[#2e1065] dark:text-purple-200 font-bold text-lg"
                   htmlFor="devCategory"
                 >
-                  {(user?.employeeType === "พนักงานราชการทั่วไป" || user?.employeeType === "ลูกจ้างประจำ") ? "สมรรถนะที่ต้องการพัฒนา" : "ความรู้/ทักษะ/สมรรถนะที่ต้องการพัฒนา"}
+                  {(targetEmployeeType === "พนักงานราชการทั่วไป" || targetEmployeeType === "ลูกจ้างประจำ") ? "สมรรถนะที่ต้องการพัฒนา" : "ความรู้/ทักษะ/สมรรถนะที่ต้องการพัฒนา"}
                 </Label>
                 {errors.devCategory && (
                   <span className="text-sm text-destructive font-bold bg-destructive/10 px-3 py-1 rounded-md animate-in fade-in zoom-in duration-300">

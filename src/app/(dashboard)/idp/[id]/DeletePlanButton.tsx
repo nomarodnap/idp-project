@@ -17,7 +17,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export default function DeletePlanButton({ planId }: { planId: string }) {
+interface DeletePlanButtonProps {
+  planId: string;
+  redirectUrl?: string;
+}
+
+export default function DeletePlanButton({ planId, redirectUrl }: DeletePlanButtonProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -29,7 +34,7 @@ export default function DeletePlanButton({ planId }: { planId: string }) {
         alert("ไม่สามารถลบแผนได้: " + res.error);
         setIsDeleting(false);
       } else {
-        router.push("/idp");
+        router.push(redirectUrl || "/idp");
       }
     } catch (error) {
       console.error(error);
