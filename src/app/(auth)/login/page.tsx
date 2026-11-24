@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+﻿import { Metadata } from "next";
 import { LoginForm } from "@/components/LoginForm";
 import { Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -126,7 +126,7 @@ export default function LoginPage() {
                   สามารถแก้ไขรหัสผ่านได้ในระบบ DPIS โดยเลือก "ลืมรหัสผ่าน" แล้วกรอกอีเมลกรมประมงที่ท่านใช้สมัครไว้
                 </p>
                 <p>
-                  หากท่านลืมอีเมลกรมประมงของท่าน ให้ติดต่อที่ <br/> ศูนย์เทคโนโลยีสารสนเทศฯ โทร. 029405602 ต่อ 4040<br/> 
+                  หากท่านติดปัญหาการเข้าใช้ระบบ ให้ติดต่อที่ <br/> ศูนย์เทคโนโลยีสารสนเทศฯ โทร. 025795591 ต่อ 5129<br/> 
                 </p>
               </div>
             </div>

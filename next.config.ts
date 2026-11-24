@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -9,4 +10,9 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: "department-of-fisheries-thaila",
+  project: "idp-app",
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+});
