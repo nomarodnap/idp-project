@@ -11,8 +11,32 @@ const sarabun = Sarabun({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://idp.fisheries.go.th"),
   title: "ระบบจัดทำแผนพัฒนารายบุคคล (IDP) - กรมประมง",
   description: "ระบบจัดทำแผนพัฒนารายบุคคล (Individual Development Plan) ของกรมประมง",
+  verification: {
+    google: "VksC1XJpXTE9VBjrIytOqPUL4M78mvNBv_UZT1J2AqI",
+  },
+  formatDetection: {
+    telephone: false,
+    date: false,
+    email: false,
+    address: false,
+  },
+  openGraph: {
+    title: "ระบบจัดทำแผนพัฒนารายบุคคล (IDP) - กรมประมง",
+    description: "ระบบจัดทำแผนพัฒนารายบุคคล (Individual Development Plan) ของกรมประมง",
+    url: "https://idp.fisheries.go.th",
+    siteName: "ระบบจัดทำแผนพัฒนารายบุคคล (IDP) - กรมประมง",
+    locale: "th_TH",
+    type: "website",
+    images: [
+      {
+        url: "/logo-fisheries.png",
+        alt: "โลโก้กรมประมง",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
